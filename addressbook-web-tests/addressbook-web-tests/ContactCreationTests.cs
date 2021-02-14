@@ -10,20 +10,20 @@ using OpenQA.Selenium.Support.UI;
 namespace addressbook_web_tests
 {
     [TestFixture]
-    public class GroupCreationTests
+    public class CreateNewContact
     {
         private IWebDriver driver;
         private StringBuilder verificationErrors;
         private string baseURL;
         private bool acceptNextAlert = true;
         private GeneralMethods general = new GeneralMethods();
-        
+
 
         [SetUp]
         public void SetupTest()
         {
             driver = new FirefoxDriver();
-            baseURL = "http://localhost/addressbook";
+            baseURL = "http://localhost/addressbook/";
             verificationErrors = new StringBuilder();
         }
 
@@ -42,57 +42,64 @@ namespace addressbook_web_tests
         }
 
         [Test]
-        public void GroupCreationTest()
+        public void CreatingNewContact()
         {
             
             general.OpenHomePage(baseURL);
             general.LogIn(new AccountData("admin", "secret"));
-            GoToGroupsPage();
-            InitGroupCreation();
-            FillGroupForm(new GroupData("test", "test1", "test2"));
-            SubmitGroupCreation();
-            ReturnToGroupsPage();
+            AddNewContact();
+            //Creating contact data to fill
+            ContactData contact = new ContactData("Piotr", "Petrov");
+            contact.Nickname = "Bratan";
+            contact.Bday = "2";
+            contact.Bmonth = "March";
+            contact.Byear = "1981";
+            contact.Address = "Lenina, 123";
+            contact.Notes = "Test Completed";
+
+            FillContactData(contact);
+            SubmitContact();
+            GoToHomePage();
             general.LogOut();
         }
 
-
-       
-        private void ReturnToGroupsPage()
+        
+        private void GoToHomePage()
         {
-            driver.FindElement(By.LinkText("group page")).Click();
+            driver.FindElement(By.LinkText("home")).Click();
         }
 
-        private void SubmitGroupCreation()
+        private void SubmitContact()
         {
-            driver.FindElement(By.Name("submit")).Click();
+            driver.FindElement(By.XPath("(//input[@name='submit'])[2]")).Click();
         }
 
-        private void FillGroupForm(GroupData group)
+        private void FillContactData(ContactData contact)
         {
-            driver.FindElement(By.Name("group_name")).Click();
-            driver.FindElement(By.Name("group_name")).Clear();
-            driver.FindElement(By.Name("group_name")).SendKeys(group.Groupname);
-            driver.FindElement(By.Name("group_header")).Click();
-            driver.FindElement(By.Name("group_header")).Clear();
-            driver.FindElement(By.Name("group_header")).SendKeys(group.Header);
-            driver.FindElement(By.Name("group_footer")).Click();
-            driver.FindElement(By.Name("group_footer")).Clear();
-            driver.FindElement(By.Name("group_footer")).SendKeys(group.Footer);
+            driver.FindElement(By.Name("firstname")).Clear();
+            driver.FindElement(By.Name("firstname")).SendKeys(contact.Firstname);
+            driver.FindElement(By.Name("middlename")).Clear();
+            driver.FindElement(By.Name("lastname")).SendKeys(contact.Lastname);
+            driver.FindElement(By.Name("nickname")).Clear();
+            driver.FindElement(By.Name("nickname")).SendKeys(contact.Nickname);
+            driver.FindElement(By.Name("address")).SendKeys(contact.Address);
+            driver.FindElement(By.Name("bday")).Click();
+            new SelectElement(driver.FindElement(By.Name("bday"))).SelectByText(contact.Bday);
+            driver.FindElement(By.Name("bday")).Click();
+            driver.FindElement(By.Name("bmonth")).Click();
+            new SelectElement(driver.FindElement(By.Name("bmonth"))).SelectByText(contact.Bmonth);
+            driver.FindElement(By.Name("bmonth")).Click();
+            driver.FindElement(By.Name("byear")).Click();
+            driver.FindElement(By.Name("byear")).Clear();
+            driver.FindElement(By.Name("byear")).SendKeys(contact.Byear);
+            driver.FindElement(By.Name("notes")).Clear();
+            driver.FindElement(By.Name("notes")).SendKeys(contact.Notes);
         }
 
-        private void InitGroupCreation()
+        private void AddNewContact()
         {
-            driver.FindElement(By.Name("new")).Click();
+            driver.FindElement(By.LinkText("add new")).Click();
         }
-
-        private void GoToGroupsPage()
-        {
-            driver.FindElement(By.LinkText("groups")).Click();
-            //driver.FindElement(By.XPath("//a[contains(., 'groups')]")).Click();
-
-
-        }
-
 
         private bool IsElementPresent(By by)
         {
