@@ -16,7 +16,6 @@ namespace addressbook_web_tests
         private StringBuilder verificationErrors;
         private string baseURL;
         private bool acceptNextAlert = true;
-        private GeneralMethods general = new GeneralMethods();
         
 
         [SetUp]
@@ -45,18 +44,31 @@ namespace addressbook_web_tests
         public void GroupCreationTest()
         {
             
-            general.OpenHomePage(baseURL);
-            general.LogIn(new AccountData("admin", "secret"));
+            OpenHomePage();
+            LogIn(new AccountData("admin", "secret"));
             GoToGroupsPage();
             InitGroupCreation();
             FillGroupForm(new GroupData("test", "test1", "test2"));
             SubmitGroupCreation();
             ReturnToGroupsPage();
-            general.LogOut();
+            LogOut();
         }
 
+        private void LogIn(AccountData user)
+        {
+            driver.FindElement(By.Name("user")).Click();
+            driver.FindElement(By.Name("user")).Clear();
+            driver.FindElement(By.Name("user")).SendKeys(user.Login);
+            driver.FindElement(By.Name("pass")).Clear();
+            driver.FindElement(By.Name("pass")).SendKeys(user.Password);
+            driver.FindElement(By.XPath("//input[@value='Login']")).Click();
+        }
 
-       
+        private void LogOut()
+        {
+            driver.FindElement(By.LinkText("Logout")).Click();
+        }
+
         private void ReturnToGroupsPage()
         {
             driver.FindElement(By.LinkText("group page")).Click();
@@ -93,7 +105,10 @@ namespace addressbook_web_tests
 
         }
 
-
+        private void OpenHomePage()
+        {
+            driver.Navigate().GoToUrl(baseURL);
+        }
         private bool IsElementPresent(By by)
         {
             try

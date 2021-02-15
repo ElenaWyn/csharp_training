@@ -61,7 +61,6 @@
   <ItemGroup>
     <Compile Include="AccountData.cs" />
     <Compile Include="ContactData.cs" />
-    <Compile Include="GeneralMethods.cs" />
     <Compile Include="GroupData.cs" />
     <Compile Include="UnitTest1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

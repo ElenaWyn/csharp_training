@@ -16,7 +16,7 @@ namespace addressbook_web_tests
         private StringBuilder verificationErrors;
         private string baseURL;
         private bool acceptNextAlert = true;
-        private GeneralMethods general = new GeneralMethods();
+        
 
 
         [SetUp]
@@ -45,8 +45,8 @@ namespace addressbook_web_tests
         public void CreatingNewContact()
         {
             
-            general.OpenHomePage(baseURL);
-            general.LogIn(new AccountData("admin", "secret"));
+            OpenHomePage();
+            LogIn(new AccountData("admin", "secret"));
             AddNewContact();
             //Creating contact data to fill
             ContactData contact = new ContactData("Piotr", "Petrov");
@@ -60,10 +60,29 @@ namespace addressbook_web_tests
             FillContactData(contact);
             SubmitContact();
             GoToHomePage();
-            general.LogOut();
+            LogOut();
         }
 
-        
+        private void OpenHomePage()
+        {
+            driver.Navigate().GoToUrl(baseURL);
+        }
+
+        private void LogIn(AccountData user)
+        {
+            driver.FindElement(By.Name("user")).Click();
+            driver.FindElement(By.Name("user")).Clear();
+            driver.FindElement(By.Name("user")).SendKeys(user.Login);
+            driver.FindElement(By.Name("pass")).Clear();
+            driver.FindElement(By.Name("pass")).SendKeys(user.Password);
+            driver.FindElement(By.XPath("//input[@value='Login']")).Click();
+        }
+
+        private void LogOut()
+        {
+            driver.FindElement(By.LinkText("Logout")).Click();
+        }
+
         private void GoToHomePage()
         {
             driver.FindElement(By.LinkText("home")).Click();
