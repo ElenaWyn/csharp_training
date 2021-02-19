@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace addressbook_web_tests
 {
-    class AccountData
+    public class AccountData
     {
         private string login;
         private string password;
