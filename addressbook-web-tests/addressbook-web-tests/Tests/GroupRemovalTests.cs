@@ -5,6 +5,7 @@ using System.Threading;
 using NUnit.Framework;
 
 
+
 namespace addressbook_web_tests
 {
     [TestFixture]
@@ -15,12 +16,8 @@ namespace addressbook_web_tests
         [Test]
         public void GroupRemovalTest()
         {
-            OpenHomePage();
-            LogIn(new AccountData("admin", "secret"));
-            GoToGroupsPage();
-            ChooseGroup(1);
-            DeleteGroup();
-            ReturnToGroupsPage();
+            app.Group.RemoveGroup(1);
+            
         }
 
        

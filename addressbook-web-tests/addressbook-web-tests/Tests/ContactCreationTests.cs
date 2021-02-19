@@ -16,9 +16,6 @@ namespace addressbook_web_tests
         public void CreatingNewContact()
         {
             
-            OpenHomePage();
-            LogIn(new AccountData("admin", "secret"));
-            AddNewContact();
             //Creating contact data to fill
             ContactData contact = new ContactData("Piotr", "Petrov");
             contact.Nickname = "Bratan";
@@ -28,10 +25,9 @@ namespace addressbook_web_tests
             contact.Address = "Lenina, 123";
             contact.Notes = "Test Completed";
 
-            FillContactData(contact);
-            SubmitContact();
-            GoToHomePage();
-            LogOut();
+            app.Contact.Create(contact);
+            app.Navigator.GoToHomePage();
+            app.Auth.LogOut();
         }
 
         
