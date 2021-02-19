@@ -10,16 +10,8 @@ namespace addressbook_web_tests
     [TestFixture]
     public class GroupCreationTests : TestBase
     {
-        
 
         [Test]
-        public void GroupCreationTest()
-        {
-            GroupData group = new GroupData("test", "test1", "test2");
-            app.Group.CreateGroup(group);
-            app.Auth.LogOut();
-        }
-
         public void EmptyGroupCreationTest()
         {
             GroupData group = new GroupData("", "", "");
@@ -27,6 +19,14 @@ namespace addressbook_web_tests
             app.Auth.LogOut();
         }
 
-       
+        [Test]
+        public void GroupCreationTest()
+        {
+            GroupData group = new GroupData("nowa", "test1", "test2");
+            app.Group.CreateGroup(group);
+            app.Auth.LogOut();
+        }
+
+
     }
 }

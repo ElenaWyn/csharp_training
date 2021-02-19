@@ -17,12 +17,14 @@ namespace addressbook_web_tests
 
         public ApplicationManager()
         {
-            loginHelper = new LogInHelper(this);
-            navigationHelper = new NavigationHelper(this, "http://localhost/addressbook");
-            group = new GroupHelper(this);
-            contactHelper = new ContactHelper(this);
             driver = new FirefoxDriver();
             baseURL = "http://localhost/addressbook";
+
+            loginHelper = new LogInHelper(this);
+            navigationHelper = new NavigationHelper(this, baseURL);
+            group = new GroupHelper(this);
+            contactHelper = new ContactHelper(this);
+            
         }
 
         public IWebDriver Driver
