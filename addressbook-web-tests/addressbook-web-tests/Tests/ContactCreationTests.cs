@@ -17,13 +17,13 @@ namespace addressbook_web_tests
         {
             
             //Creating contact data to fill
-            ContactData contact = new ContactData("Piotr", "Petrov");
-            contact.Nickname = "Bratan";
+            ContactData contact = new ContactData("Sidor", "Sidorov");
+            contact.Nickname = "Chuvak";
             contact.Bday = "2";
             contact.Bmonth = "March";
             contact.Byear = "1981";
-            contact.Address = "Lenina, 123";
-            contact.Notes = "Test Completed";
+            contact.Address = "Revolucii, 123";
+            contact.Notes = "TEST132TEST";
 
             app.Contact.Create(contact);
             app.Navigator.GoToHomePage();

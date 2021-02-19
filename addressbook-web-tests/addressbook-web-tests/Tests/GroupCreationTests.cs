@@ -22,7 +22,7 @@ namespace addressbook_web_tests
         [Test]
         public void GroupCreationTest()
         {
-            GroupData group = new GroupData("nowa", "test1", "test2");
+            GroupData group = new GroupData("nowa", "123", "321");
             app.Group.CreateGroup(group);
             app.Auth.LogOut();
         }
