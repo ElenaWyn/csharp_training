@@ -30,6 +30,37 @@ namespace addressbook_web_tests
             return this;
         }
 
+        public ContactHelper Modificate(int v, ContactData newContact)
+        {
+            InitContactModification(v);
+            FillContactData(newContact);
+            SubmitContactModification();
+            return this;
+        }
+
+        public ContactHelper SubmitContactModification()
+        {
+            driver.FindElement(By.Name("update")).Click();
+
+            return this;
+        }
+
+        public ContactHelper InitContactModification(int v)
+        {
+            CheckContact(v);
+            int input = v + 1;
+            driver.FindElement(By.XPath("//tr[" + input + "]//img[@title = 'Edit']")).Click();
+            return this;
+
+        }
+
+        public ContactHelper CheckContact(int v)
+        {
+            int input = v + 1;
+            driver.FindElement(By.XPath("//tr[" + input + "]//input[@type = 'checkbox']")).Click();
+            return this;
+        }
+
         public ContactHelper FillContactData(ContactData contact)
         {
             driver.FindElement(By.Name("firstname")).Clear();
@@ -57,6 +88,19 @@ namespace addressbook_web_tests
         public ContactHelper AddNewContact()
         {
             driver.FindElement(By.LinkText("add new")).Click();
+            return this;
+        }
+
+        public ContactHelper PushDeleteContact()
+        {
+            driver.FindElement(By.XPath("//input[@value='Delete']")).Click();
+            return this;
+        }
+
+        public ContactHelper DeleteContact()
+        {
+            PushDeleteContact();    
+            driver.SwitchTo().Alert().Accept();
             return this;
         }
 
