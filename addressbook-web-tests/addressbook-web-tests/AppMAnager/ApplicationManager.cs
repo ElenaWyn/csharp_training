@@ -11,7 +11,7 @@ namespace addressbook_web_tests
         protected GroupHelper group;
         protected ContactHelper contactHelper;
 
-        protected IWebDriver driver = new FirefoxDriver();
+        protected IWebDriver driver;
         protected string baseURL;
         protected bool acceptNextAlert = true;
 
