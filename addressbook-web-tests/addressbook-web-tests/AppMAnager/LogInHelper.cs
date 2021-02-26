@@ -17,6 +17,14 @@ namespace addressbook_web_tests
         }
         public void LogIn(AccountData user)
         {
+            if(IsLoggedIn())
+            {
+                if(IsLoggedIn(user))
+                {
+                    return;
+                }
+                LogOut();
+            }
             driver.FindElement(By.Name("user")).Click();
             driver.FindElement(By.Name("user")).Clear();
             driver.FindElement(By.Name("user")).SendKeys(user.Login);
@@ -27,7 +35,22 @@ namespace addressbook_web_tests
 
         public void LogOut()
         {
-            driver.FindElement(By.LinkText("Logout")).Click();
+            if (IsLoggedIn())
+            {
+                driver.FindElement(By.Name("logout"));
+            }
+        }
+
+        public bool IsLoggedIn(AccountData user)
+        {
+            return IsLoggedIn()
+              && driver.FindElement(By.Name("logout")).FindElement(By.TagName("b")).Text.Contains(user.Login);
+            //Text == "(" + user.Login = ")";
+        }
+
+        public bool IsLoggedIn()
+        {
+            return IsElementPresent(By.Name("logout"));
         }
 
 

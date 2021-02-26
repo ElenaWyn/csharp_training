@@ -17,18 +17,12 @@ namespace addressbook_web_tests
        
 
         [SetUp]
-        protected void SetupTest()
+        public void SetupAppManager()
         {
-            app = new ApplicationManager();
-            app.Navigator.OpenHomePage();
-            app.Auth.LogIn(new AccountData("admin", "secret"));
+            app = ApplicationManager.GetInstance();
+
         }
 
-        [TearDown]
-        protected void TeardownTest()
-        {
 
-            app.Stop();
-        }
     }
 }
