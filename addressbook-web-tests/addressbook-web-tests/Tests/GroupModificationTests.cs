@@ -18,6 +18,9 @@ namespace addressbook_web_tests
         public void GroupModificationTest()
         {
             GroupData newData = new GroupData("Mode", "mode", "mode");
+
+            app.Group.IsThereAnyGroup();
+
             app.Group.GroupModify(1, newData);
             app.Auth.LogOut();
         }

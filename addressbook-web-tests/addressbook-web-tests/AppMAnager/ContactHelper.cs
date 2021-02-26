@@ -104,6 +104,16 @@ namespace addressbook_web_tests
             return this;
         }
 
+        public ContactHelper IsThereAnyContactsOnList()
+        {
+            manager.Navigator.GoToHomePage();
+            if (! IsElementPresent(By.XPath("//tr//img[@title = 'Edit']")))
+            {
+                Create(new ContactData("Ivan", "Ivanov"));
+                return this;
+            }
+            return this;
+        }
 
 
     }

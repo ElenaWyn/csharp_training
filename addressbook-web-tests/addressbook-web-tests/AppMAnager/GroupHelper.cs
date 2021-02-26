@@ -96,6 +96,16 @@ namespace addressbook_web_tests
             return this;
         }
 
+        public GroupHelper IsThereAnyGroup()
+        {
+            manager.Navigator.GoToGroupsPage();
+            if (IsElementPresent(By.XPath("//input[@name = 'selected[]']")))
+            {
+                CreateGroup(new GroupData("test"));
+            }
+            return this;
+        }
+
 
     }
 }

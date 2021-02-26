@@ -23,6 +23,9 @@ namespace addressbook_web_tests
         public void GroupCreationTest()
         {
             GroupData group = new GroupData("nowa", "123", "321");
+
+            app.Group.IsThereAnyGroup();
+
             app.Group.CreateGroup(group);
             app.Auth.LogOut();
         }

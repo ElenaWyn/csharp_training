@@ -27,10 +27,10 @@ namespace addressbook_web_tests
         {
             app.Auth.LogOut();
 
-            AccountData trueUser = new AccountData("admin", "password");
-            app.Auth.LogIn(trueUser);
+            AccountData FalseUser = new AccountData("admin", "password");
+            app.Auth.LogIn(FalseUser);
 
-            Assert.IsFalse(app.Auth.IsLoggedIn(trueUser));
+            Assert.IsFalse(app.Auth.IsLoggedIn(FalseUser));
         }
     }
 }

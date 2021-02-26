@@ -12,6 +12,7 @@ namespace addressbook_web_tests
         protected NavigationHelper navigationHelper;
         protected GroupHelper group;
         protected ContactHelper contactHelper;
+        protected HelperBase help;
 
         protected IWebDriver driver;
         protected string baseURL;

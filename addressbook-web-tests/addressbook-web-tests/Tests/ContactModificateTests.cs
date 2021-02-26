@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using NUnit.Framework;
+using OpenQA.Selenium;
+
 
 namespace addressbook_web_tests
 {
@@ -23,10 +25,14 @@ namespace addressbook_web_tests
             newContact.Address = "Ajskaja, 123";
             newContact.Notes = "TEST987TEST";
 
+            app.Contact.IsThereAnyContactsOnList();
+
             app.Contact.Modificate(1, newContact);
             app.Navigator.GoToHomePage();
             app.Auth.LogOut();
 
         }
+
+       
     }
 }
