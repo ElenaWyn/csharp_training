@@ -36,6 +36,12 @@ namespace addressbook_web_tests
             return this;
         }
 
+        public GroupHelper ChooseGroup(int index)
+        {
+            driver.FindElement(By.XPath("(//input[@name = \"selected[]\"])[" + (index+1) + "]")).Click();
+            return this;
+        }
+
         public GroupHelper SubmitGroupModification()
         {
             driver.FindElement(By.Name("update")).Click();
@@ -72,6 +78,22 @@ namespace addressbook_web_tests
             return this;
         }
 
+        public List<GroupData> GetGroupList()
+        {
+
+            List<GroupData> groups = new List<GroupData>();
+            manager.Navigator.GoToGroupsPage();
+            ICollection<IWebElement> elements = driver.FindElements(By.CssSelector("span.group"));
+            foreach (IWebElement element in elements)
+            {
+                groups.Add(new GroupData(element.Text));
+            }
+
+            return groups;
+
+
+        }
+
         public GroupHelper InitGroupCreation()
         {
             driver.FindElement(By.Name("new")).Click();
@@ -84,12 +106,7 @@ namespace addressbook_web_tests
             return this;
         }
 
-        public GroupHelper ChooseGroup(int index)
-        {
-            driver.FindElement(By.XPath("(//input[@name = \"selected[]\"])[" + index + "]")).Click();
-            return this;
-        }
-
+        
         public GroupHelper SubmitGroupCreation()
         {
             driver.FindElement(By.Name("submit")).Click();
@@ -99,7 +116,7 @@ namespace addressbook_web_tests
         public GroupHelper IsThereAnyGroup()
         {
             manager.Navigator.GoToGroupsPage();
-            if (IsElementPresent(By.XPath("//input[@name = 'selected[]']")))
+            if (! IsElementPresent(By.XPath("//input[@name = 'selected[]']")))
             {
                 CreateGroup(new GroupData("test"));
             }
