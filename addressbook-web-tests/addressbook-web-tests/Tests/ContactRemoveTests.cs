@@ -16,9 +16,14 @@ namespace addressbook_web_tests
         {
 
             app.Contact.IsThereAnyContactsOnList();
+            List<ContactData> oldContacts = app.Contact.GetContactList();
 
             app.Contact.CheckContact(1);
             app.Contact.DeleteContact();
+            List<ContactData> newContacts = app.Contact.GetContactList();
+            oldContacts.RemoveAt(1);
+            Assert.AreEqual(oldContacts, newContacts);
+
             app.Navigator.GoToHomePage();
         }
 

@@ -26,9 +26,18 @@ namespace addressbook_web_tests
             newContact.Notes = "TEST987TEST";
 
             app.Contact.IsThereAnyContactsOnList();
+            List<ContactData> oldContacts = app.Contact.GetContactList();
 
             app.Contact.Modificate(1, newContact);
             app.Navigator.GoToHomePage();
+
+            List<ContactData> newContacts = app.Contact.GetContactList();
+            oldContacts[1].Firstname = newContact.Firstname;
+            oldContacts[1].Lastname = newContact.Lastname;
+            oldContacts.Sort();
+            newContacts.Sort();
+            Assert.AreEqual(oldContacts, newContacts);
+
             app.Auth.LogOut();
 
         }

@@ -30,6 +30,21 @@ namespace addressbook_web_tests
             return this;
         }
 
+        public List<ContactData> GetContactList()
+        {
+            List<ContactData> contacts = new List<ContactData>();
+            manager.Navigator.GoToHomePage();
+            ICollection<IWebElement> elements = driver.FindElements(By.XPath("//tr[@name = 'entry']"));
+            foreach (IWebElement element in elements)
+            {
+                string name = element.FindElement(By.XPath("//td[3]")).Text;
+                string surname = element.FindElement(By.XPath("//td[2]")).Text;
+                contacts.Add(new ContactData(name, surname));
+            }
+
+            return contacts;
+        }
+
         public ContactHelper Modificate(int v, ContactData newContact)
         {
             InitContactModification(v);
@@ -65,10 +80,11 @@ namespace addressbook_web_tests
         {
             driver.FindElement(By.Name("firstname")).Clear();
             driver.FindElement(By.Name("firstname")).SendKeys(contact.Firstname);
-            driver.FindElement(By.Name("middlename")).Clear();
+            driver.FindElement(By.Name("lastname")).Clear();
             driver.FindElement(By.Name("lastname")).SendKeys(contact.Lastname);
             driver.FindElement(By.Name("nickname")).Clear();
             driver.FindElement(By.Name("nickname")).SendKeys(contact.Nickname);
+            driver.FindElement(By.Name("address")).Clear();
             driver.FindElement(By.Name("address")).SendKeys(contact.Address);
             driver.FindElement(By.Name("bday")).Click();
             new SelectElement(driver.FindElement(By.Name("bday"))).SelectByText(contact.Bday);
