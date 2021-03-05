@@ -20,6 +20,7 @@ namespace addressbook_web_tests
 
             app.Contact.CheckContact(1);
             app.Contact.DeleteContact();
+            System.Threading.Thread.Sleep(2000);
             List<ContactData> newContacts = app.Contact.GetContactList();
             oldContacts.RemoveAt(1);
             Assert.AreEqual(oldContacts, newContacts);
