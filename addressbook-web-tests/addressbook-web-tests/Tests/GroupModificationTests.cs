@@ -26,10 +26,20 @@ namespace addressbook_web_tests
             app.Group.GroupModify(0, newData);
 
             List<GroupData> newGroups = app.Group.GetGroupList();
+            GroupData oldData = oldGroups[0];
+
             oldGroups[0].Groupname = newData.Groupname;
             oldGroups.Sort();
             newGroups.Sort();
             Assert.AreEqual(oldGroups, newGroups);
+
+            foreach (GroupData group in newGroups)
+            {
+                if(group.Id == oldData.Id)
+                {
+                    Assert.Equals(newData.Groupname, group.Groupname);
+                }
+            }
 
             app.Auth.LogOut();
         }

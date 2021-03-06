@@ -8,20 +8,16 @@ namespace addressbook_web_tests
 {
     public class GroupData : IEquatable<GroupData>, IComparable<GroupData>
     {
-        private string groupname;
-        private string header = "";
-        private string footer = "";
-
         public GroupData(string groupname)
         {
-            this.groupname = groupname;
+            Groupname = groupname;
         }
 
         public GroupData(string groupname, string header, string footer)
         {
-            this.groupname = groupname;
-            this.footer = footer;
-            this.header = header;
+            Groupname = groupname;
+            Footer = footer;
+            Header = header;
         }
 
         public bool Equals(GroupData other)
@@ -58,42 +54,13 @@ namespace addressbook_web_tests
         }
 
         
-        public string Groupname
-        {
-            get
-            {
-                return groupname;
-            }
-            set
-            {
-                groupname = value;
-            }
-        }
+        public string Groupname { get; set;  }
+       
+        public string Header { get; set; }       
 
-        public string Header
-        {
-            get
-            {
-                return header;
-            }
-            set
-            {
-                header = value;
-            }
-        }
+        public string Footer { get; set; }
 
-        public string Footer
-        {
-            get
-            {
-                return footer;
-            }
-            set
-            {
-                footer = value;
-            }
-        }
-
+        public string Id { get; set; }
         
     }
 }

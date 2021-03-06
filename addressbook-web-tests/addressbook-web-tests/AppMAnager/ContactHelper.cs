@@ -37,8 +37,8 @@ namespace addressbook_web_tests
             ICollection<IWebElement> elements = driver.FindElements(By.XPath("//tr[@name = 'entry']"));
             foreach (IWebElement element in elements)
             {
-                string name = element.FindElement(By.XPath("//td[3]")).Text;
-                string surname = element.FindElement(By.XPath("//td[2]")).Text;
+                string name = element.FindElement(By.XPath(".//td[3]")).Text;
+                string surname = element.FindElement(By.XPath(".//td[2]")).Text;
                 contacts.Add(new ContactData(name, surname));
             }
 
