@@ -21,12 +21,11 @@ namespace addressbook_web_tests
 
             app.Group.IsThereAnyGroup();
             List<GroupData> oldGroups = app.Group.GetGroupList();
-
+            GroupData oldData = oldGroups[0];
 
             app.Group.GroupModify(0, newData);
 
             List<GroupData> newGroups = app.Group.GetGroupList();
-            GroupData oldData = oldGroups[0];
 
             oldGroups[0].Groupname = newData.Groupname;
             oldGroups.Sort();
@@ -37,7 +36,7 @@ namespace addressbook_web_tests
             {
                 if(group.Id == oldData.Id)
                 {
-                    Assert.Equals(newData.Groupname, group.Groupname);
+                    Assert.AreEqual(newData.Groupname, group.Groupname);
                 }
             }
 

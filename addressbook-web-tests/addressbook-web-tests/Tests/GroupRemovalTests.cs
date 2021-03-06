@@ -18,11 +18,12 @@ namespace addressbook_web_tests
             app.Group.IsThereAnyGroup();
 
             List<GroupData> oldGroups = app.Group.GetGroupList();
+            GroupData toBeRemoved = oldGroups[0];
 
             app.Group.RemoveGroup(0);
 
             List<GroupData> newGroups = app.Group.GetGroupList();
-            GroupData toBeRemoved = oldGroups[0];
+            
             oldGroups.RemoveAt(0);
             Assert.AreEqual(oldGroups, newGroups);
 
