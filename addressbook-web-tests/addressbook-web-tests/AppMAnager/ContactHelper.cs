@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
+using System.Text.RegularExpressions;
 
 namespace addressbook_web_tests
 {
@@ -199,6 +200,15 @@ namespace addressbook_web_tests
                 return this;
             }
             return this;
+        }
+
+        public int GetNumberOfResults()
+        {
+            manager.Navigator.GoToHomePage();
+            /*string text = driver.FindElement(By.TagName("label")).Text;
+            Match m = new Regex(@"\d+").Match(text);
+            return Int32.Parse(m.Value);*/
+            return Int32.Parse(driver.FindElement(By.XPath("//*[@id=\"search_count\"]")).Text);
         }
 
 

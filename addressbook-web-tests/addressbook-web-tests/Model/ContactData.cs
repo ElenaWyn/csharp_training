@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace addressbook_web_tests
 {
@@ -112,7 +113,8 @@ namespace addressbook_web_tests
             }
             else
             {
-                return value.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "") + "\r\n";
+                //return value.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "") + "\r\n";
+                return Regex.Replace(value, "[ -()]", "") + "\r\n";
             }
         }
 
