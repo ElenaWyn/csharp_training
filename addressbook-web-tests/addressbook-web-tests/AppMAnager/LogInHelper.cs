@@ -44,8 +44,14 @@ namespace addressbook_web_tests
         public bool IsLoggedIn(AccountData user)
         {
             return IsLoggedIn()
-              && driver.FindElement(By.Name("logout")).FindElement(By.TagName("b")).Text.Contains(user.Login);
+              && GetLoggetUsername() == user.Login;
+        }
+
+        public string GetLoggetUsername()
+        {
+            string text = driver.FindElement(By.Name("logout")).FindElement(By.TagName("b")).Text;
             //Text == "(" + user.Login = ")";
+            return text.Substring(1, text.Length - 2);
         }
 
         public bool IsLoggedIn()

@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 namespace addressbook_web_tests
 {
     public class ContactData : IComparable<ContactData>, IEquatable<ContactData>
-    {        
+    {
+        public string allPhones;
+        public string allMails;
+
         public ContactData(string firstname, string lastname)
         {
             Firstname = firstname;
@@ -62,9 +65,56 @@ namespace addressbook_web_tests
         
         public string Id { get; set; }
 
+        public string AllPhones {
+            get
+            {
+                if(allPhones != null)
+                {
+                    return allPhones;
+                }
+                else
+                {
+                    return (CleanUp(Telhome) + CleanUp(Telmobile) + CleanUp(Telwork)).Trim();
+                }
 
+            }
+            set
+            {
+                allPhones = value;
+            }
+        }
 
+        public string AllMails
+        {
+            get
+            {
+                if (allMails != null)
+                {
+                    return allMails;
+                }
+                else
+                {
+                    return (CleanUp(Email) + CleanUp(Email2) + CleanUp(Email3)).Trim();
+                }
 
+            }
+            set
+            {
+                allMails = value;
+            }
+        }
+
+        private string CleanUp(string value)
+        {
+            if (value == null || value == "")
+            {
+                return "";
+            }
+            else
+            {
+                return value.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "") + "\r\n";
+            }
+        }
 
         public bool Equals(ContactData other)
         {
