@@ -16,5 +16,20 @@ namespace addressbook_web_tests
         {
             Console.Out.Write(app.Contact.GetNumberOfResults());
         }
+
+        [Test]
+        public void Dane()
+        {
+            Console.Out.Write(app.Contact.GetInformationFromInfopage(0));
+            Console.Out.Write("\r\n");
+            ContactData con = app.Contact.GetContactInformationFromEditForm(0);
+            Console.Out.Write(app.Contact.AllDataOfContact(con));
+
+        }
+
+
+
     }
+
+
 }

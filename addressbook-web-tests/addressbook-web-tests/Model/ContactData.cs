@@ -75,7 +75,7 @@ namespace addressbook_web_tests
                 }
                 else
                 {
-                    return (CleanUp(Telhome) + CleanUp(Telmobile) + CleanUp(Telwork)).Trim();
+                    return (CleanUp(Telhome) + CleanUp(Telmobile) + CleanUp(Telwork) + CleanUp(Home)).Trim();
                 }
 
             }
