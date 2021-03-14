@@ -40,7 +40,7 @@ namespace addressbook_web_tests
 
         public override string ToString()
         {
-            return Groupname;
+            return "Name= " + Groupname + "\nheader= " + Header + "\nfooter = " + Footer;
         }
 
 

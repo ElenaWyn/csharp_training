@@ -23,6 +23,21 @@ namespace addressbook_web_tests
 
         }
 
+        public static Random rnd = new Random();
+        public static string GenerateRandomString(int max)
+        {
+           
+            int l = Convert.ToInt32(rnd.NextDouble() * max);
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i<l; i++)
+            {
+                builder.Append(Convert.ToChar(Convert.ToInt32(rnd.NextDouble() * 233 + 32)));
+            }
+            return builder.ToString();
+
+        }
+
+
 
     }
 }
