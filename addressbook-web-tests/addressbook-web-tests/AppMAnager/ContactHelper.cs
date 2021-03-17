@@ -240,7 +240,7 @@ namespace addressbook_web_tests
             }
             if (contact.Homepage != "")
             {
-                homepage = "Homepage:" + CutField(contact.Homepage);
+                homepage = "Homepage:\r\n" + CutField(contact.Homepage);
             }
             if (contact.Home != "")
             {
