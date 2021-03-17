@@ -73,18 +73,17 @@ namespace addressbook_web_tests
             string homePage = driver.FindElement(By.Name("homepage")).GetAttribute("value");
 
             string bday = driver.FindElement(By.Name("bday")).
-                FindElement(By.XPath("//option[@selected = 'selected']")).Text;
+                FindElement(By.XPath("./option[@selected = 'selected']")).Text;
             //string bmonth =  driver.FindElement(By.Name("bmonth")).
             //FindElement(By.XPath("//option[@selected = 'selected']")).Text;
             string bmonth = driver.FindElement(By.Name("bmonth")).
-                FindElement(By.XPath("//option[@selected = 'selected']")).GetAttribute("value");
-            string byear = driver.FindElement(By.Name("byear")).
-                FindElement(By.XPath("//option[@selected = 'selected']")).Text;
+                FindElement(By.XPath("./option[@selected = 'selected']")).GetAttribute("value");
+            string byear = driver.FindElement(By.Name("byear")).GetAttribute("value");
 
             string aday = driver.FindElement(By.Name("aday")).
-                FindElement(By.XPath("//option[@selected = 'selected']")).Text;
+                FindElement(By.XPath("./option[@selected = 'selected']")).Text;
             string amonth = driver.FindElement(By.Name("amonth")).
-                FindElement(By.XPath("//option[@selected = 'selected']")).Text;
+                FindElement(By.XPath("./option[@selected = 'selected']")).Text;
             string ayear = driver.FindElement(By.Name("ayear")).GetAttribute("value");
 
             string address2 = driver.FindElement(By.Name("address2")).Text;
@@ -126,22 +125,188 @@ namespace addressbook_web_tests
         {
             manager.Navigator.GoToHomePage();
             SeeContactInfo(index);
-            return (driver.FindElement(By.XPath("//div[@id = 'content']")).Text).Replace("\r\n", "");
+            return driver.FindElement(By.XPath("//div[@id = 'content']")).Text;
         }
 
         public string AllDataOfContact(ContactData contact)
         {
-            int Byear = Int32.Parse(contact.Byear);
-            int Ayear = Int32.Parse(contact.Ayear);
-            string age = (DateTime.Now.Year - Byear).ToString();
-            string ageA = (DateTime.Now.Year - Ayear).ToString();
-            return (contact.Firstname + " " + contact.Middlename + " " + contact.Lastname
-                + contact.Nickname + contact.Title + contact.Company + contact.Address + "H: " + contact.Telhome + "M: " + contact.Telmobile
-                + "W: " + contact.Telwork + "F: " + contact.Fax + contact.Email + contact.Email2 + contact.Email3
-                + "Homepage:" + contact.Homepage + "Birthday " + contact.Bday + ". " + contact.Bmonth + " "
-                + contact.Byear + " " + "(" + age + ")" + "Anniversary " + contact.Aday + ". "
-                + contact.Amonth + " " + contact.Ayear + " " + "(" + ageA + ")" + contact.Address2 + "P: "
-                + contact.Home + contact.Notes);
+            string telhome = null;
+            string telmobile = null;
+            string telwork = null;
+            string fax = null;
+            string homepage = null;
+            string home = null;
+
+            string birthday = null;
+            string anniversary = null;
+            if (contact.Bday != "-" || contact.Bmonth != "-" || contact.Byear != null)
+            {
+                string day = null;
+                string month = null;
+                string dday;
+                string mmonth;
+                string year = null;
+
+                if (contact.Bday != "-")
+                {
+                    day = contact.Bday + ". ";
+                    dday = contact.Bday;
+                }
+                else
+                {
+                    day = "";
+                    dday = "1";
+                }
+                if (contact.Bmonth != "-")
+                {
+                    month = contact.Bmonth;
+                    mmonth = contact.Bmonth;
+                }
+                else
+                {
+
+                    month = "";
+                    mmonth = "January";
+                }
+
+                if (contact.Byear != null)
+                {
+                    DateTime bDate = DateTime.Parse(dday + "." + mmonth + "." + contact.Byear);
+                    year = contact.Byear + " " + "(" + CountAge(bDate) + ")";
+                }
+
+                birthday = "Birthday " + day + month + " " + year + "\r\n";
+            }
+            if (contact.Aday != "-" || contact.Amonth != "-" || contact.Ayear != null)
+            {
+
+                string day = null;
+                string dday;
+                string month = null;
+                string mmonth;
+                string year = null;
+
+                if (contact.Aday != "-")
+                {
+                    day = contact.Aday + ". ";
+                    dday = contact.Aday;
+
+                }
+                else
+                {
+
+                    day = "";
+                    dday = "1";
+                }
+
+                if (contact.Amonth != "-")
+                {
+                    month = contact.Amonth + " ";
+                    mmonth = contact.Amonth;
+                }
+                else
+                {
+                    month = "";
+                    mmonth = "January";
+                }
+                if (contact.Ayear != null)
+                {
+                    DateTime aDate = DateTime.Parse(dday + "." + mmonth + "." + contact.Ayear);
+                    year = contact.Ayear + " " + "(" + CountAge(aDate) + ")";
+                }
+                anniversary = "Anniversary " + day + month + year + "\r\n";
+            }
+
+            string middlename = null;
+            if (contact.Middlename != "")
+            {
+                middlename = " " + contact.Middlename;
+            }
+            if (contact.Telhome !="")
+            {
+                telhome = "H: " + CutField(contact.Telhome);
+            }
+            if (contact.Telmobile != "")
+            {
+                telmobile = "M: " + CutField(contact.Telmobile);
+            }
+            if (contact.Telwork != "")
+            {
+                telwork = "W: " + CutField(contact.Telwork);
+            }
+            if (contact.Fax != "")
+            {
+                fax = "F: " + CutField(contact.Fax);
+            }
+            if (contact.Homepage != "")
+            {
+                homepage = "Homepage:" + CutField(contact.Homepage);
+            }
+            if (contact.Home != "")
+            {
+                home = "P: " + CutField(contact.Home);
+            }
+            string tels = "";
+            if (telhome != null || telmobile != null || telwork != null || fax != null)
+            {
+                tels = "\r\n" + telhome + telmobile + telwork + fax;
+            }
+            string mails = "";
+            if (CutField(contact.Email) != null || CutField(contact.Email2) != null || CutField(contact.Email3) != null || homepage != null)
+            {
+                mails = "\r\n" + CutField(contact.Email) + CutField(contact.Email2) + CutField(contact.Email3) + homepage;
+            }
+            string dates = "";
+            if (birthday != null || anniversary != null)
+            {
+                dates = "\r\n" + birthday + anniversary;
+            }
+            string address2 = "";
+            if (CutField(contact.Address2) != null)
+            {
+                address2 = "\r\n" + CutField(contact.Address2);
+            }
+            string secondPhone = "";
+            if (home != null)
+            {
+                secondPhone = "\r\n" + home;
+            }
+            string notes = "";
+            if(contact.Notes != "")
+            {
+                notes = "\r\n" + contact.Notes;
+            }
+
+
+
+            return contact.Firstname + middlename + " " + CutField(contact.Lastname)
+                + CutField(contact.Nickname) +
+                CutField(contact.Title) +
+                CutField(contact.Company) +
+                CutField(contact.Address) +
+                tels + mails
+                + dates + address2
+                + secondPhone + notes;
+        }
+
+        public string CutField (string field)
+        {
+            if (field == "")
+            {
+                return null;
+            }
+            else
+            {
+                return field + "\r\n";
+            }
+        }
+        public string CountAge(DateTime dateOfBirth)
+        { 
+            DateTime dateNow = DateTime.Now;
+            int year = dateNow.Year - dateOfBirth.Year;
+            if (dateNow.Month < dateOfBirth.Month ||
+                (dateNow.Month == dateOfBirth.Month && dateNow.Day < dateOfBirth.Day)) year--;
+            return year.ToString();
         }
 
         public void SeeContactInfo(int index)

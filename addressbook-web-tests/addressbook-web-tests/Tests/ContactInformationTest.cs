@@ -28,7 +28,7 @@ namespace addressbook_web_tests
         {
             string detailData = app.Contact.GetInformationFromInfopage(0);
             string contactData = app.Contact.AllDataOfContact(app.Contact.GetContactInformationFromEditForm(0));
-            Console.Out.Write("Assertion Date:" + "\r\n" + detailData + "\r\n" + contactData);
+            Console.Out.Write("Assertion Date:" + "\r\n" + "Detailed Data\r\n" + detailData + "\r\n" + "Contact Data\r\n" + contactData);
             Assert.AreEqual(detailData, contactData);
         }
     }
