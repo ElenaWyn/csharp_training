@@ -139,6 +139,7 @@ namespace addressbook_web_tests
 
             string birthday = null;
             string anniversary = null;
+
             if (contact.Bday != "-" || contact.Bmonth != "-" || contact.Byear != null)
             {
                 string day = null;
@@ -159,7 +160,7 @@ namespace addressbook_web_tests
                 }
                 if (contact.Bmonth != "-")
                 {
-                    month = contact.Bmonth;
+                    month = contact.Bmonth + " ";
                     mmonth = contact.Bmonth;
                 }
                 else
@@ -175,7 +176,7 @@ namespace addressbook_web_tests
                     year = contact.Byear + " " + "(" + CountAge(bDate) + ")";
                 }
 
-                birthday = "Birthday " + day + month + " " + year + "\r\n";
+                birthday = "Birthday " + day + month + year + "\r\n";
             }
             if (contact.Aday != "-" || contact.Amonth != "-" || contact.Ayear != null)
             {
