@@ -5,6 +5,10 @@ using System.Threading;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
+using System.Xml;
+using System.Xml.Serialization;
+using Newtonsoft.Json;
+using Excel = Microsoft.Office.Interop.Excel;
 
 
 
@@ -56,11 +60,24 @@ namespace addressbook_web_tests
             return contacts;
         }
 
+        public static IEnumerable<ContactData> ContactDataFromXmlFile()
+        {
+            return (List<ContactData>)
+                new XmlSerializer(typeof(List<ContactData>))
+                .Deserialize(new StreamReader(@"contacts.xml"));
+        }
 
-        
+        public static IEnumerable<ContactData> ContactDataFromJsonFile()
+        {
+            return JsonConvert.DeserializeObject<List<ContactData>>(
+                File.ReadAllText(@"contacts.json"));
+        }
 
 
-        [Test, TestCaseSource("RandomContactDataProvider")]
+
+
+
+        [Test, TestCaseSource("ContactDataFromXmlFile")]
         public void CreatingNewContact(ContactData contact)
         {
 

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfContactData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ContactData>
+    <Firstname>3$%/+B</Firstname>
+    <Lastname>!</Lastname>
+    <Middlename />
+    <Nickname />
+    <Title />
+    <Address>R97</Address>
+    <Company>B=PQB</Company>
+    <Telhome>?8,</Telhome>
+    <Telwork>DH</Telwork>
+    <Telmobile>VD[</Telmobile>
+    <Fax />
+    <Email />
+    <Email2 />
+    <Email3>3O1\0Z19</Email3>
+    <Homepage />
+    <Address2>OUA:CDVF_</Address2>
+    <Home />
+    <Notes />
+    <AllPhones>?8,
+VD[
+DH</AllPhones>
+    <AllMails>3O1\0Z19</AllMails>
+  </ContactData>
+  <ContactData>
+    <Firstname>8KAR,6_J"</Firstname>
+    <Lastname>QH</Lastname>
+    <Middlename>/</Middlename>
+    <Nickname />
+    <Title>$A1`%0)P</Title>
+    <Address />
+    <Company />
+    <Telhome>!]</Telhome>
+    <Telwork />
+    <Telmobile />
+    <Fax />
+    <Email />
+    <Email2 />
+    <Email3>,]\V7^&amp;045</Email3>
+    <Homepage>1B@Y1=;</Homepage>
+    <Address2>4,^(BY</Address2>
+    <Home />
+    <Notes />
+    <AllPhones>]</AllPhones>
+    <AllMails>,]\V7^045</AllMails>
+  </ContactData>
+  <ContactData>
+    <Firstname>=.'E*/1&lt;`U</Firstname>
+    <Lastname>9$L&lt;!</Lastname>
+    <Middlename>N</Middlename>
+    <Nickname />
+    <Title />
+    <Address />
+    <Company />
+    <Telhome />
+    <Telwork />
+    <Telmobile />
+    <Fax />
+    <Email>JTQV/ C;H</Email>
+    <Email2 />
+    <Email3 />
+    <Homepage>FB;*J</Homepage>
+    <Address2 />
+    <Home />
+    <Notes />
+    <AllPhones />
+    <AllMails>JTQV/C;H</AllMails>
+  </ContactData>
+</ArrayOfContactData>

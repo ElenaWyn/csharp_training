@@ -38,6 +38,17 @@ namespace addressbook_web_tests
 
         }
 
+        public static string GenerateNewPhone()
+        {
+            string phone = "";
+            for (int i = 0; i < 11; i++)
+            {
+                phone = phone + rnd.Next(0, 9).ToString();
+            }
+            return phone;
+
+        }
+
        
 
 
