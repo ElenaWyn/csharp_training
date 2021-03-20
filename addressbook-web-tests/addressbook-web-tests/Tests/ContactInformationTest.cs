@@ -31,5 +31,19 @@ namespace addressbook_web_tests
             Console.Out.Write("Assertion Date:" + "\r\n" + "Detailed Data\r\n" + detailData + "\r\n" + "Contact Data\r\n" + contactData);
             Assert.AreEqual(detailData, contactData);
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

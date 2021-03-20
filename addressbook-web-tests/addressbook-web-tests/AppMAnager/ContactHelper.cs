@@ -7,6 +7,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace addressbook_web_tests
 {
@@ -115,10 +116,10 @@ namespace addressbook_web_tests
                 Aday = aday,
                 Amonth = amonth,
                 Ayear = ayear,
-                Home  = extraPhone,
+                Home = extraPhone,
                 Notes = notes
             };
-            
+
         }
 
         public string GetInformationFromInfopage(int index)
@@ -223,7 +224,7 @@ namespace addressbook_web_tests
             {
                 middlename = " " + contact.Middlename;
             }
-            if (contact.Telhome !="")
+            if (contact.Telhome != "")
             {
                 telhome = "H: " + CutField(contact.Telhome);
             }
@@ -273,7 +274,7 @@ namespace addressbook_web_tests
                 secondPhone = "\r\n" + home;
             }
             string notes = "";
-            if(contact.Notes != "")
+            if (contact.Notes != "")
             {
                 notes = "\r\n" + contact.Notes;
             }
@@ -290,7 +291,7 @@ namespace addressbook_web_tests
                 + secondPhone + notes;
         }
 
-        public string CutField (string field)
+        public string CutField(string field)
         {
             if (field == "")
             {
@@ -302,7 +303,7 @@ namespace addressbook_web_tests
             }
         }
         public string CountAge(DateTime dateOfBirth)
-        { 
+        {
             DateTime dateNow = DateTime.Now;
             int year = dateNow.Year - dateOfBirth.Year;
             if (dateNow.Month < dateOfBirth.Month ||
@@ -313,7 +314,7 @@ namespace addressbook_web_tests
         public void SeeContactInfo(int index)
         {
             manager.Navigator.GoToHomePage();
-            IList<IWebElement> cells =  TakeCellsOfIndex(index);
+            IList<IWebElement> cells = TakeCellsOfIndex(index);
             cells[6].Click();
         }
 
@@ -333,7 +334,7 @@ namespace addressbook_web_tests
         }
 
         private List<ContactData> contactCache = null;
-        
+
         public List<ContactData> GetContactList()
         {
             if (contactCache == null)
@@ -346,7 +347,7 @@ namespace addressbook_web_tests
                     string name = element.FindElement(By.XPath(".//td[3]")).Text;
                     string surname = element.FindElement(By.XPath(".//td[2]")).Text;
                     contactCache.Add(new ContactData(name, surname)
-                        {
+                    {
                         Id = element.FindElement(By.TagName("input")).GetAttribute("id")
                     });
                 }
@@ -382,7 +383,7 @@ namespace addressbook_web_tests
 
         public ContactHelper CheckContact(int v)
         {
-            driver.FindElement(By.XPath("//tr[" + (v+2) + "]//input[@type = 'checkbox']")).Click();
+            driver.FindElement(By.XPath("//tr[" + (v + 2) + "]//input[@type = 'checkbox']")).Click();
             return this;
         }
 
@@ -410,7 +411,7 @@ namespace addressbook_web_tests
             return this;
         }
 
-       
+
         public ContactHelper AddNewContact()
         {
             driver.FindElement(By.LinkText("add new")).Click();
@@ -426,7 +427,7 @@ namespace addressbook_web_tests
 
         public ContactHelper DeleteContact()
         {
-            PushDeleteContact();    
+            PushDeleteContact();
             driver.SwitchTo().Alert().Accept();
             return this;
         }
@@ -434,7 +435,7 @@ namespace addressbook_web_tests
         public ContactHelper IsThereAnyContactsOnList()
         {
             manager.Navigator.GoToHomePage();
-            if (! IsElementPresent(By.XPath("//tr//img[@title = 'Edit']")))
+            if (!IsElementPresent(By.XPath("//tr//img[@title = 'Edit']")))
             {
                 Create(new ContactData("Ivan", "Ivanov"));
                 return this;
@@ -451,6 +452,77 @@ namespace addressbook_web_tests
             return Int32.Parse(driver.FindElement(By.XPath("//*[@id=\"search_count\"]")).Text);
         }
 
+        public static ContactData GenrateRandomContactData()
+        {
+            Dictionary<string, string> slownikPol = new Dictionary<string, string>
+            {
+                { "Middlename", "" }, {"Nickname", "" }, {"Title", "" },
+                { "Address", "" }, {"Company", "" }, {"Telhome", "" },
+                { "Telwork", "" }, {"Telmobile", "" },
+                { "Fax", "" }, {"Email", "" }, {"Email2", "" },
+                { "Email3", "" }, {"Homepage", "" }, {"Address2", "" },
+                { "Home", "" }, {"Notes", "" }
+            };
+
+            string[] listaPol = new[] {"Middlename", "Nickname", "Title", "Address", "Company", "Telhome", "Telwork", "Telmobile",
+                "Fax", "Email", "Email2", "Email3", "Homepage", "Address2", "Home", "Notes" };
+            Random rnd = new Random();
+
+            int howManyFields = rnd.Next(1, listaPol.Length);
+
+            List<int> whatFileds = new List<int>();
+            for (int i = 0; i < howManyFields; i++)
+            {
+                whatFileds.Add(rnd.Next(0, listaPol.Length - 1));
+            }
+
+            //Fill other fields
+            List<string> filledFieldList = new List<string>(); //Fields which we want to fill in contact
+            for (int a = 0; a < whatFileds.Count; a++)
+            {
+                string pole = listaPol[whatFileds[a]];
+                filledFieldList.Add(pole);
+
+            }
+
+            
+            for (int c = 0; c < filledFieldList.Count; c++)
+            {
+                slownikPol[filledFieldList[c]] = TestBase.GenerateRandomString(10);
+            }
+
+            return new ContactData(TestBase.GenerateRandomString(10), TestBase.GenerateRandomString(10))
+            {
+                Middlename = slownikPol["Middlename"],
+                Address = slownikPol["Address"],
+                Telhome = slownikPol["Telhome"],
+                Telwork = slownikPol["Telwork"],
+                Telmobile = slownikPol["Telmobile"],
+                Email = slownikPol["Email"],
+                Email2 = slownikPol["Email2"],
+                Email3 = slownikPol["Email3"],
+                Nickname = slownikPol["Nickname"],
+                Company = slownikPol["Company"],
+                Title = slownikPol["Title"],
+                Address2 = slownikPol["Address2"],
+                Fax = slownikPol["Fax"],
+                Homepage = slownikPol["Homepage"],
+                
+                Home = slownikPol["Home"],
+                Notes = slownikPol["Notes"]
+            };
+
+        }
+
+
+
+
+
+
+
+
 
     }
 }
+
+

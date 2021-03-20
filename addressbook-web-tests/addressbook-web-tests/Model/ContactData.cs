@@ -18,6 +18,10 @@ namespace addressbook_web_tests
             Lastname = lastname;
         }
 
+        public ContactData()
+        {
+        }
+
         public string Firstname { get; set; }
 
         public string Lastname { get; set; }
@@ -167,6 +171,8 @@ namespace addressbook_web_tests
             }
 
         }
+
+
 
     }
 }
