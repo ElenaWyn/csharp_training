@@ -70,7 +70,7 @@ namespace addressbook_web_tests
             List<GroupData> groups = new List<GroupData>();
             Excel.Application app = new Excel.Application();
             Excel.Workbook wb = app.Workbooks.Open(Path.Combine(Directory.GetCurrentDirectory(), @"groups.xlsx"));
-            Excel.Worksheet sheet = wb.ActiveSheet;
+            Excel.Worksheet sheet = wb.Sheets[1];
             Excel.Range range = sheet.UsedRange;
             for (int a = 1; a <= range.Rows.Count; a++)
             {
