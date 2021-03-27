@@ -77,7 +77,7 @@ namespace addressbook_web_tests
         public string Notes { get; set; }
         [Column(Name = "id"), PrimaryKey]
         public string Id { get; set; }
-        [Column(Name = "id")]
+        [Column(Name = "deprecated")]
         public string Deprecated { get; set; }
 
         public string AllPhones {

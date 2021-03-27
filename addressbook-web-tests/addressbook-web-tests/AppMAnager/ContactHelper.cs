@@ -83,7 +83,7 @@ namespace addressbook_web_tests
 
         public void ClearGroupFilter()
         {
-            new SelectElement(driver.FindElement(By.Name("group"))).SelectByText("{all}");
+            new SelectElement(driver.FindElement(By.Name("group"))).SelectByText("[all]");
 
         }
 
