@@ -15,7 +15,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 namespace addressbook_web_tests
 {
     [TestFixture]
-    public class CreateNewContact : AuthTestBase
+    public class CreateNewContact : ContactTestBase
     {
 
         public static IEnumerable<ContactData> RandomContactDataProvider()
@@ -81,12 +81,12 @@ namespace addressbook_web_tests
         public void CreatingNewContact(ContactData contact)
         {
 
-            List<ContactData> oldContacts = app.Contact.GetContactList();
+            List<ContactData> oldContacts = ContactData.GetAll();
 
             app.Contact.Create(contact);
             app.Navigator.GoToHomePage();
 
-            List<ContactData> newContacts = app.Contact.GetContactList();
+            List<ContactData> newContacts = ContactData.GetAll();
             oldContacts.Add(contact);
             oldContacts.Sort();
             newContacts.Sort();

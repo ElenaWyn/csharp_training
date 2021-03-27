@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using LinqToDB.Mapping;
 
 namespace addressbook_web_tests
 {
+
+    [Table(Name = "addressbook")]
     public class ContactData : IComparable<ContactData>, IEquatable<ContactData>
     {
         public string allPhones;
@@ -21,53 +24,56 @@ namespace addressbook_web_tests
         public ContactData()
         {
         }
-
+        [Column(Name = "firstname")]
         public string Firstname { get; set; }
-
+        [Column(Name = "lastname")]
         public string Lastname { get; set; }
-
+        [Column(Name = "middlename")]
         public string Middlename { get; set; }
-
+        [Column(Name = "nickname")]
         public string Nickname { get; set; }
-
+        [Column(Name = "title")]
         public string Title { get; set; }
-
+        [Column(Name = "address")]
         public string Address { get; set; }
-
+        [Column(Name = "company")]
         public string Company { get; set; }
+        [Column(Name = "home")]
         public string Telhome { get; set; }
-
+        [Column(Name = "work")]
         public string Telwork { get; set; }
+        [Column(Name = "mobile")]
         public string Telmobile { get; set; }
-
+        [Column(Name = "fax")]
         public string Fax { get; set; }
+        [Column(Name = "email")]
         public string Email { get; set; }
-
+        [Column(Name = "email2")]
         public string Email2 { get; set; }
-
+        [Column(Name = "email3")]
         public string Email3 { get; set; }
-
+        [Column(Name = "homepage")]
         public string Homepage { get; set; }
-
+        [Column(Name = "bday")]
         public string Bday { get; set; }
-
+        [Column(Name = "bmonth")]
         public string Bmonth { get; set; }
-
+        [Column(Name = "byear")]
         public string Byear { get; set; }
-
+        [Column(Name = "aday")]
         public string Aday { get; set; }
-
+        [Column(Name = "amonth")]
         public string Amonth { get; set; }
-
+        [Column(Name = "ayear")]
         public string Ayear { get; set; }
 
-
+        [Column(Name = "address2")]
         public string Address2 { get; set; }
-
+        [Column(Name = "phone2")]
         public string Home { get; set; }
-
+        [Column(Name = "notes")]
         public string Notes { get; set; }
-        
+        [Column(Name = "id")]
         public string Id { get; set; }
 
         public string AllPhones {
@@ -170,6 +176,14 @@ namespace addressbook_web_tests
                return Lastname.CompareTo(other.Lastname);
             }
 
+        }
+
+        public static List<ContactData> GetAll()
+        {
+            using (AddressbookDB db = new AddressbookDB())
+            {
+                return (from c in db.Contacts select c).ToList();
+            }
         }
 
 

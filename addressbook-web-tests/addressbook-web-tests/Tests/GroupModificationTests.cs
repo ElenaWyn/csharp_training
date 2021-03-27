@@ -10,7 +10,7 @@ namespace addressbook_web_tests
 {
 
     [TestFixture]
-    public class GroupModificationTests : AuthTestBase
+    public class GroupModificationTests : GroupsTestBase
     {
 
 
@@ -20,21 +20,19 @@ namespace addressbook_web_tests
             GroupData newData = new GroupData("Mode", "mode", "mode");
 
             app.Group.IsThereAnyGroup();
-            List<GroupData> oldGroups = app.Group.GetGroupList();
-            GroupData oldData = oldGroups[0];
+            List<GroupData> oldGroups = GroupData.GetAll();
+            GroupData toBeModificated = oldGroups[0];
 
-            app.Group.GroupModify(0, newData);
+            app.Group.GroupModify(toBeModificated, newData);
 
-            List<GroupData> newGroups = app.Group.GetGroupList();
+            List<GroupData> newGroups = GroupData.GetAll();
 
-            oldGroups[0].Groupname = newData.Groupname;
-            oldGroups.Sort();
-            newGroups.Sort();
+            toBeModificated.Groupname = newData.Groupname;
             Assert.AreEqual(oldGroups, newGroups);
 
             foreach (GroupData group in newGroups)
             {
-                if(group.Id == oldData.Id)
+                if(group.Id == toBeModificated.Id)
                 {
                     Assert.AreEqual(newData.Groupname, group.Groupname);
                 }

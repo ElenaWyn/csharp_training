@@ -43,6 +43,8 @@ namespace addressbook_web_tests
 
         }
 
+       
+
         private IList<IWebElement> TakeCellsOfIndex(int index)
         {
             return driver.FindElements(By.Name("entry"))[index].
@@ -362,17 +364,37 @@ namespace addressbook_web_tests
             SubmitContactModification();
             return this;
         }
+        public ContactHelper Modificate(ContactData oldData, ContactData newContact)
+        {
+            InitContactModification(oldData.Id);
+            FillContactData(newContact);
+            SubmitContactModification();
+            return this;
+        }
+
+       
 
         public ContactHelper SubmitContactModification()
         {
-            driver.FindElement(By.Name("update")).Click();
+            driver.FindElement(By.XPath("//input[@value = 'Update']")).Click();
             contactCache = null;
             return this;
         }
 
+        public ContactHelper InitContactModification(string id)
+        {
+            //driver.FindElement(By.XPath("//tr[" + (v+2) + "]//img[@title = 'Edit']")).Click();
+            /*driver.FindElement(By.XPath("(//input[@name = 'selected[]' and @value = '" + id + "' and descendant::tr[@name = 'entry'])")).
+            driver.FindElements(By.Name("entry"))[v].
+                FindElements(By.TagName("td"))[7].
+                FindElement(By.TagName("a")).Click();*/
+            driver.FindElement(By.XPath("//input[@value = '"+id+"']/ancestor ::td[contains(@class, 'center')]/ancestor :: tr[contains(@name, 'entry')]/td[8]/a")).Click();
+            return this;
+
+        }
+
         public ContactHelper InitContactModification(int v)
         {
-            CheckContact(v);
             //driver.FindElement(By.XPath("//tr[" + (v+2) + "]//img[@title = 'Edit']")).Click();
             driver.FindElements(By.Name("entry"))[v].
                 FindElements(By.TagName("td"))[7].
@@ -381,9 +403,9 @@ namespace addressbook_web_tests
 
         }
 
-        public ContactHelper CheckContact(int v)
+        public ContactHelper CheckContact (string id)
         {
-            driver.FindElement(By.XPath("//tr[" + (v + 2) + "]//input[@type = 'checkbox']")).Click();
+            driver.FindElement(By.XPath("(//input[@name = 'selected[]' and @value = '" + id + "'])")).Click();
             return this;
         }
 

@@ -40,7 +40,7 @@ namespace addressbook_web_tests
             {
                 return;
             }
-            driver.FindElement(By.XPath("//a[@href = './']")).Click();        
+            driver.FindElement(By.XPath("//a[@href='./']")).Click();        
         }
 
         public void OpenHomePage()
