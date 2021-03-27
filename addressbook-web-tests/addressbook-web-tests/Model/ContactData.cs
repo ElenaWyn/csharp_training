@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using LinqToDB.Mapping;
+using NUnit.Framework;
 
 namespace addressbook_web_tests
 {
@@ -15,6 +16,7 @@ namespace addressbook_web_tests
         public string allPhones;
         public string allMails;
 
+        
         public ContactData(string firstname, string lastname)
         {
             Firstname = firstname;
@@ -73,8 +75,10 @@ namespace addressbook_web_tests
         public string Home { get; set; }
         [Column(Name = "notes")]
         public string Notes { get; set; }
-        [Column(Name = "id")]
+        [Column(Name = "id"), PrimaryKey]
         public string Id { get; set; }
+        [Column(Name = "id")]
+        public string Deprecated { get; set; }
 
         public string AllPhones {
             get
@@ -182,7 +186,20 @@ namespace addressbook_web_tests
         {
             using (AddressbookDB db = new AddressbookDB())
             {
-                return (from c in db.Contacts select c).ToList();
+                return (from c in db.Contacts.Where(x => x.Deprecated == "0000-00-00 00:00:00") select c).ToList();
+            }
+        }
+
+        
+
+        public List<GroupData> GetGroups()
+        {
+            using (AddressbookDB db = new AddressbookDB())
+            {
+               return (from g in db.Groups
+                        from gcr in db.GCR.Where(p => p.ContactId == Id && p.GroupId == g.Id)
+                        select g).Distinct().ToList();
+
             }
         }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
@@ -56,6 +57,17 @@ namespace addressbook_web_tests
             return this;
         }
 
+        public int WhatGroup()
+        {
+            Random rnd = new Random();
+            List<GroupData> groups = GroupData.GetAll();
+            if (groups.Count == 0)
+            {
+
+                Assert.Fail("There are no groups!");
+            }
+            return rnd.Next(0, groups.Count - 1);
+        }
 
         public GroupHelper ChooseGroup(int index)
         {

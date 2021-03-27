@@ -27,6 +27,16 @@ namespace addressbook_web_tests
 
         }
 
+        [Test]
+        public void TestConnectivity()
+        {
+            foreach (ContactData con in GroupData.GetAll()[2].GetContacts())
+            {
+                System.Console.Out.WriteLine(con);
+            }
+        }
+
+
 
 
     }

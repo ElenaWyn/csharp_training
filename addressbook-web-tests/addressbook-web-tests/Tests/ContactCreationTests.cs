@@ -96,8 +96,7 @@ namespace addressbook_web_tests
             app.Auth.LogOut();
         }
 
-        
-        
+       
 
         
 
