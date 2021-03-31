@@ -632,8 +632,15 @@ namespace addressbook_web_tests
 
         }
 
-
-
+        public void ChooseContactFromList(GroupData group, out List<ContactData> oldList, out ContactData contact)
+        {
+            oldList = group.GetContacts();
+            contact = ContactData.GetAll().Except(group.GetContacts()).First();
+            if (contact == null)
+            {
+                Create(GenrateRandomContactData());
+            }
+        }
 
 
 

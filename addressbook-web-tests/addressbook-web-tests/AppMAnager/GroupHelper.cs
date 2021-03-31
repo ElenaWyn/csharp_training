@@ -13,6 +13,7 @@ namespace addressbook_web_tests
 {
     public class GroupHelper : HelperBase
     {
+        Random rnd = new Random();
         public GroupHelper(ApplicationManager manager) : base(manager)
         {
         }
@@ -67,6 +68,13 @@ namespace addressbook_web_tests
                 Assert.Fail("There are no groups!");
             }
             return rnd.Next(0, groups.Count - 1);
+        }
+
+        public GroupData ChooseGroupFromList()
+        {
+            int HowManyGroups = GroupData.GetAll().Count();
+            GroupData group = GroupData.GetAll()[rnd.Next(0, GroupData.GetAll().Count() - 1)];
+            return group;
         }
 
         public GroupHelper ChooseGroup(int index)

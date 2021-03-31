@@ -12,13 +12,26 @@ namespace addressbook_web_tests
     public class AddingContactToGroupTest : AuthTestBase
     {
         new Random rnd = new Random();
+        private void IsthereanythingInAddressBook()
+        {
+            app.Group.IsThereAnyGroup();
+            app.Contact.IsThereAnyContactsOnList();
+        }
+
 
         [Test]
         public void TestAddingContactToGroup()
         {
-            GroupData group = GroupData.GetAll()[3];
-            List<ContactData> oldList = group.GetContacts();
-            ContactData contact = ContactData.GetAll().Except(group.GetContacts()).First();
+            //check if there are any group or any contact, if no, create new
+            IsthereanythingInAddressBook();
+
+            //Choosing group to add contact
+            GroupData group = app.Group.ChooseGroupFromList();
+
+            //Choosing contact to add to group, if all the contacts are in group, create new one
+            List<ContactData> oldList;
+            ContactData contact;
+            app.Contact.ChooseContactFromList(group, out oldList, out contact);
 
             app.Contact.AddContactToGroup(group, contact);
 
@@ -29,17 +42,26 @@ namespace addressbook_web_tests
             Assert.AreEqual(oldList, newList);
         }
 
+       
+
+        
+
         [Test]
         public void TestDeletingContactFromGroup()
         {
-            
-            GroupData group = GroupData.GetAll()[app.Group.WhatGroup()];
+            //check if there are any group or any contact, if no, create new
+            IsthereanythingInAddressBook();
+
+            GroupData group = app.Group.ChooseGroupFromList();
             List<ContactData> oldList = group.GetContacts();
-            if (oldList.Count<=0)
-            {
-                Assert.Fail("There are no contacts in this group");
-            }
             ContactData contactToDelete = oldList[rnd.Next(0, oldList.Count - 1)];
+
+            if (oldList.Count <= 0)
+            {
+                app.Contact.AddContactToGroup(group, ContactData.GetAll()[0]);
+                contactToDelete = ContactData.GetAll()[0];
+                oldList = group.GetContacts();
+            }
 
             app.Contact.DeleteContactFromGroup(group.Groupname, contactToDelete.Id);
 
@@ -51,5 +73,6 @@ namespace addressbook_web_tests
 
         }
 
+        
     }
 }
