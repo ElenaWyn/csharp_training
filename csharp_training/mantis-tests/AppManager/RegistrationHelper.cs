@@ -24,24 +24,24 @@ namespace mantis_tests
 
         public void OpenRegistrationForm()
         {
-            driver.FindElement(By.LinkText("Зарегистрировать новую учётную запись")).Click();
+            driver.FindElements(By.CssSelector("span.bracket-link"))[0].Click();
         }
 
         public void SubmitRegistration()
         {
-            driver.FindElement(By.XPath("//input[@value = 'Зарегистрироваться']")).Click();
+            driver.FindElement(By.CssSelector("input.button")).Click();
         }
 
         public void FillRegistrationForm(AccountData account)
         {
            
-            driver.FindElement(By.Id("username")).SendKeys(account.Name);
-            driver.FindElement(By.Id("email-field")).SendKeys(account.Email);
+            driver.FindElement(By.Name("username")).SendKeys(account.Name);
+            driver.FindElement(By.Name("email")).SendKeys(account.Email);
         }
 
         public void OpenMainPage()
         {
-            manager.Driver.Url = "https://localhost/mantisbt-2.25.0/login_page.php";
+            manager.Driver.Url = "https://localhost/mantisbt-1.3.20/login_page.php";
             Thread.Sleep(5000);
         }
     }

@@ -24,7 +24,7 @@
  * In general a value of OFF means the feature is disabled and ON means the
  * feature is enabled.  Any other cases will have an explanation.
  *
- * For more details see https://www.mantisbt.org/docs/master/
+ * For more details see http://www.mantisbt.org/docs/master-1.3.x/
  *
  * @package MantisBT
  * @copyright Copyright 2000 - 2002  Kenzaburo Ito - kenito@300baud.org
@@ -63,15 +63,23 @@ $g_db_password			= '';
 $g_database_name		= 'bugtracker';
 
 /**
+ * Database Schema Name - used in the case of db2.
+ * @global string $g_db_schema
+ */
+$g_db_schema			= '';
+
+/**
  * Defines the database type. Supported types are listed below;
  * the corresponding PHP extension must be enabled.
  *
  * RDBMS           db_type       PHP ext   Comments
  * -----           -------       -------   --------
  * MySQL           mysqli        mysqli    default
+ *                 mysql         mysql     PHP < 5.5.0 only
  * PostgreSQL      pgsql         pgsql
  * MS SQL Server   mssqlnative   sqlsrv    experimental
  * Oracle          oci8          oci8      experimental
+ * DB2             db2           ibm-db2   unsupported (backwards compatibility only)
  *
  * @global string $g_db_type
  */
@@ -89,38 +97,6 @@ $g_db_type				= 'mysqli';
  * NOTE: the installer does not yet fully support the use of dsn's
  */
 $g_dsn = '';
-
-/**
- * Database Table prefix.
- * The given string is added with an underscore before the base table name,
- * e.g. 'bug' => 'mantis_bug'.
- * To avoid the 30-char limit on identifiers in Oracle (< 12cR2), the prefix
- * should be set to blank or kept as short as possible (e.g. 'm')
- * @global string $g_db_table_prefix
- */
-$g_db_table_prefix = 'mantis';
-
-/**
- * Database Table suffix.
- * The given string is added with an underscore after the base table name,
- * e.g. 'bug' => 'bug_table'.
- * @see $g_db_table_prefix for size limitation recommendation
- * @global string $g_db_table_suffix
- */
-$g_db_table_suffix = '_table';
-
-/**
- * Plugin Table prefix.
- * The given string is added with an underscore between the table prefix and
- * the base table name, and the plugin basename is added after that
- * e.g. 'Example' plugin's table 'foo' => 'mantis_plugin_Example_foo_table'.
- * To avoid the 30-char limit on identifiers in Oracle (< 12cR2), the prefix
- * should be kept as short as possible (e.g. 'plg'); it is however strongly
- * recommended not to use an empty string here.
- * @see $g_db_table_prefix
- * @global string $g_db_table_prefix
- */
-$g_db_table_plugin_prefix	= 'plugin';
 
 ####################
 # Folder Locations #
@@ -152,12 +128,6 @@ $g_class_path = $g_core_path . 'classes' . DIRECTORY_SEPARATOR;
 $g_library_path = $g_absolute_path . 'library' . DIRECTORY_SEPARATOR;
 
 /**
- * Path to vendor folder for 3rd party libraries. Requires trailing / or \
- * @global string $g_library_path
- */
-$g_vendor_path = $g_absolute_path . 'vendor' . DIRECTORY_SEPARATOR;
-
-/**
  * Path to lang folder for language files. Requires trailing / or \
  * @global string $g_language_path
  */
@@ -186,7 +156,11 @@ unset( $t_local_config );
 $t_protocol = 'http';
 $t_host = 'localhost';
 if( isset ( $_SERVER['SCRIPT_NAME'] ) ) {
-	$t_protocol = http_is_protocol_https() ? 'https' : 'http';
+	if( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ) {
+		$t_protocol= $_SERVER['HTTP_X_FORWARDED_PROTO'];
+	} else if( !empty( $_SERVER['HTTPS'] ) && ( strtolower( $_SERVER['HTTPS'] ) != 'off' ) ) {
+		$t_protocol = 'https';
+	}
 
 	# $_SERVER['SERVER_PORT'] is not defined in case of php-cgi.exe
 	if( isset( $_SERVER['SERVER_PORT'] ) ) {
@@ -224,11 +198,7 @@ if( isset ( $_SERVER['SCRIPT_NAME'] ) ) {
 			break;
 		case 'check':		# admin checks dir
 		case 'soap':
-		case 'rest':
 			$t_path = rtrim( dirname( dirname( $t_path ) ), '/\\' ) . '/';
-			break;
-		case 'swagger':
-			$t_path = rtrim( dirname( dirname( dirname( $t_path ) ) ), '/\\' ) . '/';
 			break;
 		case '':
 			$t_path = '/';
@@ -248,6 +218,13 @@ if( isset ( $_SERVER['SCRIPT_NAME'] ) ) {
  * @global string $g_path
  */
 $g_path	= $t_protocol . '://' . $t_host . $t_path;
+
+/**
+ * path to your images directory (for icons)
+ * requires trailing /
+ * @global string $g_icon_path
+ */
+$g_icon_path = '%path%images/';
 
 /**
  * Short web path without the domain name
@@ -270,6 +247,15 @@ $g_manual_url = 'doc/en-US/Admin_Guide/html-desktop/';
 ##############
 
 /**
+ * Session handler.  Possible values:
+ *  'php' -> Default PHP filesystem sessions
+ *  'adodb' -> Database storage sessions
+ *  'memcached' -> Memcached storage sessions
+ * @global string $g_session_handler
+ */
+$g_session_handler = 'php';
+
+/**
  * Session save path.  If false, uses default value as set by session handler.
  * @global bool $g_session_save_path
  */
@@ -288,8 +274,6 @@ $g_session_validation = ON;
  * not correctly work with this option enabled because they cache pages
  * incorrectly.
  * WARNING: Disabling this is a security risk!!
- *
- * @global integer $g_form_security_validation
  */
 $g_form_security_validation = ON;
 
@@ -340,13 +324,13 @@ $g_crypto_master_salt = '';
 $g_allow_signup			= ON;
 
 /**
- * Maximum number of failed login attempts before the user's account is locked.
- * Once locked, it is required to reset the password (lost password).
- * The counter is reset to zero after each successful login.
- * Set to OFF to disable this feature and allow unlimited failed login attempts.
+ * Max. attempts to login using a wrong password before lock the account.
+ * When locked, it's required to reset the password (lost password)
+ * Value resets to zero at each successfully login
+ * Set to OFF to disable this control
  * @global integer $g_max_failed_login_count
  */
-$g_max_failed_login_count = 5;
+$g_max_failed_login_count = OFF;
 
 /**
  * access level required to be notified when a new user has been created using
@@ -373,7 +357,7 @@ $g_signup_use_captcha	= OFF;
 /**
  * absolute path (with trailing slash!) to folder which contains your
  * TrueType-Font files used for the Relationship Graphs,
- * and the Workflow Graphs
+ * the Workflow Graphs and the MantisGraph plugin
  * @global string $g_system_font_folder
  */
 $g_system_font_folder	= '';
@@ -458,15 +442,13 @@ $g_enable_email_notification	= ON;
  *
  * @global integer $g_email_notifications_verbose
  */
-$g_email_notifications_verbose = OFF;
+$g_email_notifications_verbose = ON;
 
 /**
- * Sets the default email notifications values for different user categories.
- *
- * In combination with *notify_flags* (see below), this config option controls
- * who should get email notifications on different actions/statuses.
- *
- * The user categories are:
+ * The following two config options allow you to control who should get email
+ * notifications on different actions/statuses.  The first option
+ * (default_notify_flags) sets the default values for different user
+ * categories.  The user categories are:
  *
  *      'reporter': the reporter of the bug
  *       'handler': the handler of the bug
@@ -494,21 +476,18 @@ $g_email_notifications_verbose = OFF;
  *        '<status>': eg: 'resolved', 'closed', 'feedback', 'acknowledged', etc.
  *                     this list corresponds to $g_status_enum_string
  *
- * Examples:
- * - If you wanted to have all developers get notified of new bugs you might
- *   add the following lines to your config file:
+ * If you wanted to have all developers get notified of new bugs you might add
+ * the following lines to your config file:
  *
- *   $g_notify_flags['new']['threshold_min'] = DEVELOPER;
- *   $g_notify_flags['new']['threshold_max'] = DEVELOPER;
+ * $g_notify_flags['new']['threshold_min'] = DEVELOPER;
+ * $g_notify_flags['new']['threshold_max'] = DEVELOPER;
  *
- * - You might want to do something similar so all managers are notified when a
- *   bug is closed.
- * - If you did not want reporters to be notified when a bug is closed
- *   (only when it is resolved) you would use:
+ * You might want to do something similar so all managers are notified when a
+ * bug is closed.  If you did not want reporters to be notified when a bug is
+ * closed (only when it is resolved) you would use:
  *
- *   $g_notify_flags['closed']['reporter'] = OFF;
+ * $g_notify_flags['closed']['reporter'] = OFF;
  *
- * @see $g_notify_flags
  * @global array $g_default_notify_flags
  */
 
@@ -524,30 +503,28 @@ $g_default_notify_flags = array(
 );
 
 /**
- * Sets notifications overrides for specific actions/statuses.
- *
- * See above for detailed information. As an example of how to use this config
- * option, the default setting
- * - disables bugnotes notifications on new bugs (not needed in this case)
- * - disables all notifications for monitoring event, except explicit
- * example of how to use this config option.
-
+ * We don't need to send these notifications on new bugs
+ * (see above for info on this config option)
+ * @todo (though I'm not sure they need to be turned off anymore
+ *      - there just won't be anyone in those categories)
+ *      I guess it serves as an example and a placeholder for this
+ *      config option
  * @see $g_default_notify_flags
  * @global array $g_notify_flags
  */
-$g_notify_flags = array(
-	'new' => array(
-		'bugnotes'      => OFF,
-	),
-	'monitor' => array(
-		'reporter'      => OFF,
-		'handler'       => OFF,
-		'monitor'       => OFF,
-		'bugnotes'      => OFF,
-		'explicit'      => ON,
-		'threshold_min' => NOBODY,
-		'threshold_max' => NOBODY,
-	),
+$g_notify_flags['new'] = array(
+	'bugnotes' => OFF,
+	'monitor'  => OFF
+);
+
+$g_notify_flags['monitor'] = array(
+	'reporter'      => OFF,
+	'handler'       => OFF,
+	'monitor'       => OFF,
+	'bugnotes'      => OFF,
+	'explicit'      => ON,
+	'threshold_min' => NOBODY,
+	'threshold_max' => NOBODY
 );
 
 /**
@@ -622,7 +599,6 @@ $g_show_user_email_threshold = NOBODY;
 /**
  * This specifies the access level that is needed to see realnames on user view
  * page
- * @see $g_show_realname
  * @global integer $g_show_user_realname_threshold
  */
 $g_show_user_realname_threshold = NOBODY;
@@ -681,130 +657,6 @@ $g_smtp_connection_mode = '';
 $g_smtp_port = 25;
 
 /**
- * Enable DomainKeys Identified Mail (DKIM) Signatures (rfc6376)
- * To successfully sign mails you need to enable DKIM and provide at least:
- * - DKIM domain
- * - DKIM private key or key file path
- * - DKIM selector
- * - DKIM identity
- * @see $g_email_dkim_domain
- * @see $g_email_dkim_private_key_file_path
- * @see $g_email_dkim_private_key_string
- * @see $g_email_dkim_selector
- * @see $g_email_dkim_identity
- * @global integer $g_email_dkim_enable
- */
-$g_email_dkim_enable = OFF;
-
-/**
- * DomainKeys Identified Mail (DKIM) Signatures domain
- * This is usually the same as the domain of your from email
- * @see $g_from_email
- * @see $g_email_dkim_enable
- * @global string $g_email_dkim_domain
- */
-$g_email_dkim_domain = 'example.com';
-
-/**
- * DomainKeys Identified Mail (DKIM) Signatures private key path
- * Path to the private key. If $g_email_dkim_private_key_string is specified
- * this setting will not be used.
- * @see $g_email_dkim_private_key_string
- * @see $g_email_dkim_enable
- * @global string $g_email_dkim_private_key_file_path
- */
-$g_email_dkim_private_key_file_path = '';
-
-
-/**
- * DomainKeys Identified Mail (DKIM) Signatures private key value
- * This string should contain private key for signing. Leave empty
- * string if you wish to load the key from the file defined with
- * $g_email_dkim_private_key_file_path.
- * @see $g_email_dkim_enable
- * @see $g_email_dkim_private_key_file_path
- * @global string $g_email_dkim_private_key_string
- */
-$g_email_dkim_private_key_string = '';
-
-/**
- * DomainKeys Identified Mail (DKIM) Signatures selector
- * DNS selector for the signature (rfc6376)
- * DNS TXT field should have for instance:
- *   host mail.example._domainkey
- *   value v=DKIM1; t=s; n=core; k=rsa; p=[public key]
- * @see $g_email_dkim_enable
- * @global string $g_email_dkim_selector
- */
-$g_email_dkim_selector = 'mail.example';
-
-/**
- * DomainKeys Identified Mail (DKIM) Signatures private key password
- * Leave empty string if your private key does not have password
- * @see $g_email_dkim_enable
- * @global string $g_email_dkim_passphrase
- */
-$g_email_dkim_passphrase = '';
-
-/**
- * DomainKeys Identified Mail (DKIM) Signatures identity
- * Identity you are signing the mails with (rfc6376)
- * This is usually the same as your from email
- * @see $g_from_email
- * @see $g_email_dkim_enable
- * @global string $g_email_dkim_identity
- */
-$g_email_dkim_identity = 'noreply@example.com';
-
-/**
- * Enable S/MIME signature.
- *
- * @global integer $g_email_smime_enable
- */
-$g_email_smime_enable = OFF;
-
-/**
- * Path to the S/MIME certificate.
- *
- * The file must contain a PEM-encoded certificate.
- *
- * @global string $g_email_smime_cert_file
- */
-$g_email_smime_cert_file = '';
-
-/**
- * Path to the S/MIME private key file.
- *
- * The file must contain a PEM-encoded private key matching the S/MIME certificate.
- *
- * @see $g_email_smime_cert_file
- *
- * @global string $g_email_smime_key_file
- */
-$g_email_smime_key_file = '';
-
-/**
- * Password for the S/MIME private key.
- *
- * Leave blank if the private key is not protected by a passphrase.
- * @see $g_email_smime_key_file
- *
- * @global string $g_email_smime_key_password
- */
-$g_email_smime_key_password = '';
-
-/**
- * Optional path to S/MIME extra certificates.
- *
- * The file must contain one (or more) PEM-encoded certificates, which will be
- * included in the signature to help the recipient verify the certificate
- * specified in {@see $g_email_smime_cert_file} ("CA Chain").
- *
- * @global string $g_email_smime_extracerts_file
- */
-$g_email_smime_extracerts_file = '';
-
-/**
  * It is recommended to use a cronjob or a scheduler task to send emails. The
  * cronjob should typically run every 5 minutes.  If no cronjob is used,then
  * user will have to wait for emails to be sent after performing an action
@@ -828,12 +680,6 @@ $g_email_separator2 = str_pad('', 70, '-');
  * @global integer $g_email_padding_length
  */
 $g_email_padding_length	= 28;
-
-/**
- * Duration (in days) to retry failed emails before deleting them from queue.
- * @global integer $g_email_retry_in_days
- */
-$g_email_retry_in_days = 7;
 
 ###########################
 # MantisBT Version String #
@@ -881,7 +727,6 @@ $g_language_choices_arr = array(
 	'arabic',
 	'arabicegyptianspoken',
 	'asturian',
-	'basque',
 	'belarusian_tarask',
 	'breton',
 	'bulgarian',
@@ -897,7 +742,6 @@ $g_language_choices_arr = array(
 	'finnish',
 	'french',
 	'galician',
-	'georgian',
 	'german',
 	'greek',
 	'hebrew',
@@ -909,12 +753,10 @@ $g_language_choices_arr = array(
 	'korean',
 	'latvian',
 	'lithuanian',
-	'luxembourgish',
 	'macedonian',
 	'norwegian_bokmal',
 	'norwegian_nynorsk',
 	'occitan',
-	'persian',
 	'polish',
 	'portuguese_brazil',
 	'portuguese_standard',
@@ -922,19 +764,17 @@ $g_language_choices_arr = array(
 	'romanian',
 	'russian',
 	'serbian',
-	'serbian_latin',
 	'slovak',
 	'slovene',
 	'spanish',
-	'swedish',
 	'swissgerman',
+	'swedish',
 	'tagalog',
 	'turkish',
 	'ukrainian',
 	'urdu',
 	'vietnamese',
 	'volapuk',
-	'zazaki',
 );
 
 /**
@@ -947,14 +787,12 @@ $g_language_auto_map = array(
 	'ar' => 'arabic',
 	'arz' => 'arabicegyptianspoken',
 	'ast' => 'asturian',
-	'eu' => 'basque',
 	'be-tarask' => 'belarusian_tarask',
 	'bg' => 'bulgarian',
 	'br' => 'breton',
 	'ca' => 'catalan',
 	'zh-cn, zh-sg, zh' => 'chinese_simplified',
 	'zh-hk, zh-tw' => 'chinese_traditional',
-	'hr' => 'croatian',
 	'cs' => 'czech',
 	'da' => 'danish',
 	'nl-be, nl' => 'dutch',
@@ -963,42 +801,38 @@ $g_language_auto_map = array(
 	'fi' => 'finnish',
 	'fr-ca, fr-be, fr-ch, fr' => 'french',
 	'gl' => 'galician',
+	'gsw' => 'swissgerman',
 	'de-de, de-at, de-ch, de' => 'german',
 	'he' => 'hebrew',
 	'hu' => 'hungarian',
+	'hr' => 'croatian',
 	'is' => 'icelandic',
 	'ia' => 'interlingua',
 	'it-ch, it' => 'italian',
 	'ja' => 'japanese',
-	'ka' => 'georgian',
 	'ko' => 'korean',
-	'lv' => 'latvian',
+	'ksh' => 'ripoarisch',
 	'lt' => 'lithuanian',
-	'lb' => 'luxembourgish',
+	'lv' => 'latvian',
 	'mk' => 'macedonian',
 	'no' => 'norwegian_bokmal',
 	'nn' => 'norwegian_nynorsk',
 	'oc' => 'occitan',
-	'fa' => 'persian',
 	'pl' => 'polish',
 	'pt-br' => 'portuguese_brazil',
 	'pt' => 'portuguese_standard',
-	'ksh' => 'ripoarisch',
 	'ro-mo, ro' => 'romanian',
 	'ru-mo, ru-ru, ru-ua, ru' => 'russian',
 	'sr' => 'serbian',
-	'sr-latn' => 'serbian_latin',
 	'sk' => 'slovak',
 	'sl' => 'slovene',
 	'es-mx, es-co, es-ar, es-cl, es-pr, es' => 'spanish',
 	'sv-fi, sv' => 'swedish',
-	'gsw' => 'swissgerman',
 	'tl' => 'tagalog',
 	'tr' => 'turkish',
 	'uk' => 'ukrainian',
 	'vi' => 'vietnamese',
 	'vo' => 'volapuk',
-	'diq' => 'zazaki',
 );
 
 /**
@@ -1006,69 +840,6 @@ $g_language_auto_map = array(
  * @global string $g_fallback_language
  */
 $g_fallback_language = 'english';
-
-##########################
-# MantisBT Font Settings #
-##########################
-
-/**
- * Name of one of google fonts available at https://fonts.google.com/
- * Chosen family must be part of in $g_font_family_choices_local such that it works
- * even if CDN option is disabled
- * @see $g_font_family_choices_local
- * @see $g_cdn_enabled
- * @global string $g_font_family
- */
-$g_font_family = 'Open Sans';
-
-/**
- * List the google fonts that the users are allowed to choose from.
- * Google offers over 800 fonts. The list below is limited to the ones tested on MantisBT UI
- * @global array $g_font_family_choices
- */
-$g_font_family_choices = array(
-	'Amiko',
-	'Architects Daughter',
-	'Archivo Narrow',
-	'Arvo',
-	'Bitter',
-	'Cabin',
-	'Cinzel',
-	'Comfortaa',
-	'Courgette',
-	'Droid Sans',
-	'Gloria Hallelujah',
-	'Inconsolata',
-	'Josefin Sans',
-	'Kadwa',
-	'Karla',
-	'Kaushan Script',
-	'Lato',
-	'Montserrat',
-	'Open Sans',
-	'Orbitron',
-	'Oregano',
-	'Palanquin',
-	'Poppins',
-	'Raleway',
-	'Rhodium Libre',
-	'Sarala',
-	'Scope One',
-	'Secular One',
-	'Ubuntu',
-	'Vollkorn'
-);
-
-/**
- * List of fonts that are installed as part of MantisBT
- * This list is used when using CDN option is disabled
- * @global array $g_font_family_choices_local
- */
-$g_font_family_choices_local = array(
-	'Montserrat',
-	'Open Sans',
-	'Poppins'
-);
 
 #############################
 # MantisBT Display Settings #
@@ -1129,6 +900,13 @@ $g_logo_url = '%default_home_page%';
 $g_enable_project_documentation = OFF;
 
 /**
+ * Display another instance of the menu at the bottom.  The top menu will still
+ * remain.
+ * @global integer $g_show_footer_menu
+ */
+$g_show_footer_menu = OFF;
+
+/**
  * show extra menu bar with all available projects
  * @global integer $g_show_project_menu_bar
  */
@@ -1167,7 +945,7 @@ $g_severity_significant_threshold = MAJOR;
 
 /**
  * The default columns to be included in the View Issues Page.
- * This can be overridden using Manage -> Manage Configuration -> Manage Columns
+ * This can be overriden using Manage -> Manage Configuration -> Manage Columns
  * Also each user can configure their own columns using My Account -> Manage
  * Columns. Some of the columns specified here can be removed automatically if
  * they conflict with other configuration. Or if the current user doesn't have
@@ -1185,7 +963,7 @@ $g_severity_significant_threshold = MAJOR;
  *
  * @global array $g_view_issues_page_columns
  */
-$g_view_issues_page_columns = array(
+$g_view_issues_page_columns = array (
 	'selection', 'edit', 'priority', 'id', 'sponsorship_total',
 	'bugnotes_count', 'attachment_count', 'category_id', 'severity', 'status',
 	'last_updated', 'summary'
@@ -1197,7 +975,7 @@ $g_view_issues_page_columns = array(
  * user can configure their own columns using My Account -> Manage Columns.
  * @global array $g_print_issues_page_columns
  */
-$g_print_issues_page_columns = array(
+$g_print_issues_page_columns = array (
 	'selection', 'priority', 'id', 'sponsorship_total', 'bugnotes_count',
 	'attachment_count', 'category_id', 'severity', 'status', 'last_updated',
 	'summary'
@@ -1209,7 +987,7 @@ $g_print_issues_page_columns = array(
  * configure their own columns using My Account -> Manage Columns.
  * @global array $g_csv_columns
  */
-$g_csv_columns = array(
+$g_csv_columns = array (
 	'id', 'project_id', 'reporter_id', 'handler_id', 'priority',
 	'severity', 'reproducibility', 'version', 'projection', 'category_id',
 	'date_submitted', 'eta', 'os', 'os_build', 'platform', 'view_state',
@@ -1222,7 +1000,7 @@ $g_csv_columns = array(
  * user can configure their own columns using My Account -> Manage Columns
  * @global array $g_excel_columns
  */
-$g_excel_columns = array(
+$g_excel_columns = array (
 	'id', 'project_id', 'reporter_id', 'handler_id', 'priority', 'severity',
 	'reproducibility', 'version', 'projection', 'category_id',
 	'date_submitted', 'eta', 'os', 'os_build', 'platform', 'view_state',
@@ -1234,6 +1012,25 @@ $g_excel_columns = array(
  * @global integer $g_show_bug_project_links
  */
 $g_show_bug_project_links = ON;
+
+/**
+ * Position of the status color legend
+ * Allowed values are:
+ * - STATUS_LEGEND_POSITION_NONE - do not display the legend at all
+ * - STATUS_LEGEND_POSITION_TOP
+ * - STATUS_LEGEND_POSITION_BOTTOM (default)
+ * - STATUS_LEGEND_POSITION_BOTH
+ * @global integer $g_status_legend_position
+ */
+$g_status_legend_position = STATUS_LEGEND_POSITION_BOTTOM;
+
+/**
+ * Show a legend with percentage of bug status
+ * x% of all bugs are new, y% of all bugs are assigned and so on.
+ * If set to ON it will printed below the status colour legend.
+ * @global integer $g_status_percentage_legend
+ */
+$g_status_percentage_legend = OFF;
 
 /**
  * Position of the filter box, can be: POSITION_*
@@ -1269,16 +1066,19 @@ $g_show_version_dates_threshold = NOBODY;
 
 /**
  * show users with their real name or not
- * @see $g_sort_by_last_name
- * @see $g_show_user_realname_threshold
  * @global integer $g_show_realname
  */
 $g_show_realname = OFF;
 
 /**
+ * leave off for now
+ * @global integer $g_differentiate_duplicates
+ */
+$g_differentiate_duplicates = OFF;
+
+/**
  * sorting for names in dropdown lists. If turned on, "Jane Doe" will be sorted
  * with the "D"s
- * @see $g_show_realname
  * @global integer $g_sort_by_last_name
  */
 $g_sort_by_last_name = OFF;
@@ -1313,12 +1113,10 @@ $g_show_roadmap_dates = ON;
 ##########################
 
 /**
- * Time for long lived cookie to live in seconds.  It is also used as the default for
- * permanent logins if $g_allow_permanent_cookie is enabled and selected.
- * @see $g_allow_permanent_cookie
+ * time for 'permanent' cookie to live in seconds (1 year)
  * @global integer $g_cookie_time_length
  */
-$g_cookie_time_length = 60 * 60 * 24 * 365;
+$g_cookie_time_length = 30000000;
 
 /**
  * Allow users to opt for a 'permanent' cookie when logging in
@@ -1343,38 +1141,44 @@ $g_long_process_timeout = 0;
 ##########################
 
 /**
- * Date format strings defaults to ISO 8601 formatting.
- * For detailed instructions on date formatting
- * @see http://www.php.net/manual/en/function.date.php
+ * date format strings defaults to ISO 8601 formatting
+ * go to http://www.php.net/manual/en/function.date.php
+ * for detailed instructions on date formatting
  * @global string $g_short_date_format
  */
 $g_short_date_format = 'Y-m-d';
 
 /**
- * Date format strings defaults to ISO 8601 formatting.
- * For detailed instructions on date formatting
- * @see http://www.php.net/manual/en/function.date.php
+ * date format strings defaults to ISO 8601 formatting
+ * go to http://www.php.net/manual/en/function.date.php
+ * for detailed instructions on date formatting
  * @global string $g_normal_date_format
  */
 $g_normal_date_format = 'Y-m-d H:i';
 
 /**
- * Date format strings defaults to ISO 8601 formatting.
- * For detailed instructions on date formatting
- * @see http://www.php.net/manual/en/function.date.php
+ * date format strings defaults to ISO 8601 formatting
+ * go to http://www.php.net/manual/en/function.date.php
+ * for detailed instructions on date formatting
  * @global string $g_complete_date_format
  */
 $g_complete_date_format = 'Y-m-d H:i T';
 
 /**
- * Datetime picker widget format string.
- * This format needs needs to match the one defined in {@see $g_normal_date_format}
- * For detailed instructions on date formatting
- * @see http://momentjs.com/docs/#/displaying/format/
- * @global string $g_datetime_picker_format
+ * jscalendar date format string
+ * go to http://www.php.net/manual/en/function.date.php
+ * for detailed instructions on date formatting
+ * @global string $g_calendar_js_date_format
  */
-$g_datetime_picker_format = 'Y-MM-DD HH:mm';
+$g_calendar_js_date_format = '\%Y-\%m-\%d \%H:\%M';
 
+/**
+ * jscalendar date format string
+ * go to http://www.php.net/manual/en/function.date.php
+ * for detailed instructions on date formatting
+ * @global string $g_calendar_date_format
+ */
+$g_calendar_date_format = 'Y-m-d H:i';
 
 ##############################
 # MantisBT TimeZone Settings #
@@ -1406,8 +1210,6 @@ $g_default_timezone = '';
  * Indicates whether the news feature should be enabled or disabled.
  * This feature is deprecated and is expected to be moved to a plugin
  * in the future.
- *
- * @global integer $g_news_enabled
  */
 $g_news_enabled = OFF;
 
@@ -1460,13 +1262,6 @@ $g_default_project_view_status = VS_PUBLIC;
  * @global integer $g_default_bug_view_status
  */
 $g_default_bug_view_status = VS_PUBLIC;
-
-/**
- * Default value for bug description field used on bug report page.
- *
- * @global string $g_default_bug_description
- */
-$g_default_bug_description = '';
 
 /**
  * Default value for steps to reproduce field.
@@ -1529,12 +1324,6 @@ $g_default_bug_eta = ETA_NONE;
 $g_default_bug_relationship_clone = BUG_REL_NONE;
 
 /**
- * Allow parent bug to close regardless of child status.
- * @global integer $g_allow_parent_of_unresolved_to_close
- */
-$g_allow_parent_of_unresolved_to_close = OFF;
-
-/**
  * Default for new bug relationships
  * @global integer $g_default_bug_relationship
  */
@@ -1567,7 +1356,7 @@ $g_hide_status_default = CLOSED;
 
 /**
  *
- * @global integer $g_show_sticky_issues
+ * @global string $g_show_sticky_issues
  */
 $g_show_sticky_issues = ON;
 
@@ -1639,14 +1428,16 @@ $g_default_email_on_reopened = ON;
 $g_default_email_on_bugnote = ON;
 
 /**
+ * @todo Unused
  * @global integer $g_default_email_on_status
  */
-$g_default_email_on_status = OFF;
+$g_default_email_on_status = 0;
 
 /**
+ * @todo Unused
  * @global integer $g_default_email_on_priority
  */
-$g_default_email_on_priority = OFF;
+$g_default_email_on_priority = 0;
 
 /**
  * 'any'
@@ -1765,7 +1556,7 @@ $g_severity_multipliers = array(
  * @global array $g_resolution_multipliers
  */
 $g_resolution_multipliers = array(
-	UNABLE_TO_REPRODUCE => 2,
+	UNABLE_TO_DUPLICATE => 2,
 	NOT_FIXABLE         => 1,
 	DUPLICATE           => 3,
 	NOT_A_BUG           => 5,
@@ -1842,7 +1633,7 @@ $g_mentions_enabled = ON;
 
 /**
  * The tag to use for mentions.
- * @global string $g_mentions_tag
+ * @var string $g_mentions_tag
  */
 $g_mentions_tag = '@';
 
@@ -1927,13 +1718,6 @@ $g_allow_file_upload = ON;
 $g_file_upload_method = DATABASE;
 
 /**
- * Use File dropzone: enable drag and drop into a drop zone functionality for
- * file upload fields
- * @global integer $g_dropzone_enabled
- */
-$g_dropzone_enabled = ON;
-
-/**
  * When using DISK for storing uploaded files, this setting control
  * the access permissions they will have on the web server: with the default
  * value (0400) files will be read-only, and accessible only by the user
@@ -1946,21 +1730,17 @@ $g_dropzone_enabled = ON;
 $g_attachments_file_permissions = 0400;
 
 /**
- * Maximum file size that can be uploaded (in bytes).
- *
- * Defaults to 5 MiB. Also check your PHP settings for upload_max_filesize and
- * post_max_size (defaulted to 2 MiB and 8 MiB respectively), as well as
- * memory_limit.
- *
+ * Maximum file size that can be uploaded
+ * Also check your PHP settings (default is usually 2MBs)
  * @global integer $g_max_file_size
  */
-$g_max_file_size = 5 * 1024 * 1024;
+$g_max_file_size = 5000000;
 
 /**
  * Maximum number of files that can be uploaded simultaneously
  * @global integer $g_file_upload_max_num
  */
-$g_file_upload_max_num = 10;
+$g_file_upload_max_num = 1;
 
 /**
  * Files that are allowed or not allowed.  Separate items by commas.
@@ -2086,90 +1866,51 @@ $g_reauthentication_expiry = TOKEN_EXPIRY_AUTHENTICATED;
 
 
 /**
- * Specifies the LDAP or Active Directory server(s) to connect to.
- *
- * This must be a full LDAP URI (ldap[s]://hostname:port)
- * - Protocol must be either:
- *   - ldap - unencrypted or opportunistic TLS (STARTTLS) {@see $g_ldap_use_starttls}
- *   - ldaps - for TLS encryption
+ * Specifies the LDAP or Active Directory server to connect to, and must be
+ * provided as an URI
+ * - Protocol is optional, can be one of ldap or ldaps, defaults to ldap
  * - Port number is optional, and defaults to 389. If this doesn't work, try
  *   using one of the following standard port numbers: 636 (ldaps); for Active
  *   Directory Global Catalog forest-wide search, use 3268 (ldap) or 3269 (ldaps)
  *
  * Examples of valid URI:
- *   ldap://ldap.example.com
- *   ldaps://ldap.example.com:3269/
  *
- * Multiple servers can be specified as a space-separated list.
+ *   ldap.example.com
+ *   ldap.example.com:3268
+ *   ldap://ldap.example.com/
+ *   ldaps://ldap.example.com:3269/
  *
  * @global string $g_ldap_server
  */
-$g_ldap_server = 'ldap://ldap.example.com/';
+$g_ldap_server = 'ldaps://ldap.example.com/';
 
 /**
- * Determines whether the connection will attempt an opportunistic upgrade
- * to a TLS connection (STARTTLS).
- *
- * For security, a failure aborts the entire connection, so make sure your
- * server supports StartTLS if this setting is ON, and use the ldap:// scheme
- * (not ldaps://).
- *
- * @global integer $g_ldap_use_starttls
- */
-$g_ldap_use_starttls = ON;
-
-/**
- * The minimum version of the TLS protocol to allow.
- *
- * This maps to the LDAP_OPT_X_TLS_PROTOCOL_MIN ldap library option.
- * For example, LDAP_OPT_X_TLS_PROTOCOL_TLS1_2. If OFF (default), then the
- * protocol version is not set.
- *
- * Requires PHP 7.1 or later.
- * For security, a failure aborts the entire connection.
- *
- * @see https://www.php.net/manual/en/ldap.constants.php#constant.ldap-opt-x-tls-protocol-min
- *
- * @global int $g_ldap_tls_protocol_min
- */
-$g_ldap_tls_protocol_min = OFF;
-
-/**
- * The root distinguished name for LDAP searches.
+ * The root distinguished name for LDAP searches
  * @global string $g_ldap_root_dn
  */
 $g_ldap_root_dn = 'dc=example,dc=com';
 
 /**
- * LDAP search filter for the organization.
+ * LDAP search filter for the organization
  * e.g. '(organizationname=*Traffic)'
  * @global string $g_ldap_organization
  */
 $g_ldap_organization = '';
 
 /**
- * The LDAP Protocol Version.
- *
- * This maps to the LDAP_OPT_PROTOCOL_VERSION ldap library option.
- *
- * Possible values are 2, 3 (default) or 0. If 0, then the protocol version is
- * not set, and you get whatever default the underlying ldap library uses.
- * In almost all cases you should use 3. LDAPv3 was introduced back in 1997.
- * LDAPv2 was deprecated in 2003 by RFC3494.
+ * The LDAP Protocol Version, if 0, then the protocol version is not set.
+ * For Active Directory use version 3.
  *
  * @global integer $g_ldap_protocol_version
  */
-$g_ldap_protocol_version = 3;
+$g_ldap_protocol_version = 0;
 
 /**
  * Duration of the timeout for TCP connection to the LDAP server (in seconds).
- *
- * This maps to the LDAP_OPT_NETWORK_TIMEOUT ldap library option.
- *
  * Set this to a low value when the hostname defined in $g_ldap_server resolves
  * to multiple IP addresses, allowing rapid failover to the next available LDAP
  * server.
- * Defaults to 0 (infinite).
+ * Defaults to 0 (infinite)
  *
  * @global int $g_ldap_network_timeout
  */
@@ -2177,13 +1918,8 @@ $g_ldap_network_timeout = 0;
 
 /**
  * Determines whether the LDAP library automatically follows referrals returned
- * by LDAP servers or not.
- *
- * This maps to the LDAP_OPT_REFERRALS ldap library option.
- *
+ * by LDAP servers or not. This maps to LDAP_OPT_REFERRALS ldap library option.
  * For Active Directory, this should be set to OFF.
- * If you have only one LDAP server, setting to this to OFF is advisable to prevent
- * any man-in-the-middle attacks.
  *
  * @global integer $g_ldap_follow_referrals
  */
@@ -2192,8 +1928,7 @@ $g_ldap_follow_referrals = ON;
 /**
  * The distinguished name of the service account to use for binding to the
  * LDAP server.
- * For anonymous binding, leave empty.
- * For example, 'cn=ldap,ou=Administrators,dc=example,dc=com'.
+ * For example, 'CN=ldap,OU=Administrators,DC=example,DC=com'.
  *
  * @global string $g_ldap_bind_dn
  */
@@ -2202,15 +1937,14 @@ $g_ldap_bind_dn = '';
 /**
  * The password for the service account used to establish the connection to
  * the LDAP server.
- * For anonymous binding, leave empty.
  *
  * @global string $g_ldap_bind_passwd
  */
 $g_ldap_bind_passwd = '';
 
 /**
- * The LDAP field for username.
- * Use 'sAMAccountName' for Active Directory.
+ * The LDAP field for username
+ * Use 'sAMAccountName' for Active Directory
  * @global string $g_ldap_uid_field
  */
 $g_ldap_uid_field = 'uid';
@@ -2224,8 +1958,6 @@ $g_ldap_realname_field = 'cn';
 /**
  * Use the realname specified in LDAP (ON) rather than the one stored in the
  * database (OFF).
- * Note that MantisBT will update the database with the data retrieved
- * from LDAP when ON.
  * @global integer $g_use_ldap_realname
  */
 $g_use_ldap_realname = OFF;
@@ -2233,14 +1965,12 @@ $g_use_ldap_realname = OFF;
 /**
  * Use the email address specified in LDAP (ON) rather than the one stored
  * in the database (OFF).
- * Note that MantisBT will update the database with the data retrieved
- * from LDAP when ON.
  * @global integer $g_use_ldap_email
  */
 $g_use_ldap_email = OFF;
 
 /**
- * This configuration option allows replacing the LDAP server with a comma-
+ * This configuration option allows replacing the ldap server with a comma-
  * delimited text file for development or testing purposes.
  * The LDAP simulation file format is as follows:
  *   - One line per user
@@ -2251,7 +1981,7 @@ $g_use_ldap_email = OFF;
  *        - password
  *   - Any extra fields are ignored
  * On production systems, this option should be set to ''.
- * @global string $g_ldap_simulation_file_path
+ * @global integer $g_ldap_simulation_file_path
  */
 $g_ldap_simulation_file_path = '';
 
@@ -2338,7 +2068,7 @@ $g_bug_resolution_fixed_threshold = FIXED;
  * threshold are considered to be resolved in an unsuccessful way.
  * @global integer $g_bug_resolution_not_fixed_threshold
  */
-$g_bug_resolution_not_fixed_threshold = UNABLE_TO_REPRODUCE;
+$g_bug_resolution_not_fixed_threshold = UNABLE_TO_DUPLICATE;
 
 /**
  * Bug is closed.  In some custom installations a bug may be considered as
@@ -2431,6 +2161,14 @@ $g_preview_max_height = 250;
 $g_view_attachments_threshold = VIEWER;
 
 /**
+ * list of filetypes to view inline. This is a string of extensions separated
+ * by commas. This is used when downloading an attachment. Rather than
+ * downloading, the attachment is viewed in the browser.
+ * @global string $g_inline_file_exts
+ */
+$g_inline_file_exts = 'gif,png,jpg,jpeg,bmp';
+
+/**
  * access level needed to download bug attachments
  * @global integer $g_download_attachments_threshold
  */
@@ -2493,11 +2231,9 @@ $g_enable_product_build = OFF;
  *   - attachments
  *   - category_id
  *   - due_date
- *   - eta
  *   - handler
- *   - monitors
  *   - os
- *   - os_build
+ *   - os_version
  *   - platform
  *   - priority
  *   - product_build
@@ -2507,7 +2243,6 @@ $g_enable_product_build = OFF;
  *   - severity
  *   - status
  *   - steps_to_reproduce
- *   - tags
  *   - target_version
  *   - view_state
  *
@@ -2515,13 +2250,6 @@ $g_enable_product_build = OFF;
  * listed in this option. Fields not listed above cannot be shown on the bug
  * report page. Visibility of custom fields is handled via the Manage =>
  * Manage Custom Fields administrator page.
- *
- * Note that 'monitors' is not an actual field; adding it to the list will let
- * authorized reporters select users to add to the issue's monitoring list.
- * Monitors will only be notified of the submission if both their e-mail prefs
- * and the flags allow it (i.e. `$g_notify_flags['new']['monitor'] = ON`).
- * @see $g_monitor_add_others_bug_threshold
- * @see $g_notify_flags
  *
  * This setting can be set on a per-project basis by using the
  * Manage => Manage Configuration administrator page.
@@ -2535,7 +2263,7 @@ $g_bug_report_page_fields = array(
 	'due_date',
 	'handler',
 	'os',
-	'os_build',
+	'os_version',
 	'platform',
 	'priority',
 	'product_build',
@@ -2564,7 +2292,7 @@ $g_bug_report_page_fields = array(
  *   - id
  *   - last_updated
  *   - os
- *   - os_build
+ *   - os_version
  *   - platform
  *   - priority
  *   - product_build
@@ -2591,7 +2319,7 @@ $g_bug_report_page_fields = array(
  *
  * @global array $g_bug_view_page_fields
  */
-$g_bug_view_page_fields = array(
+$g_bug_view_page_fields = array (
 	'additional_info',
 	'attachments',
 	'category_id',
@@ -2604,7 +2332,81 @@ $g_bug_view_page_fields = array(
 	'id',
 	'last_updated',
 	'os',
-	'os_build',
+	'os_version',
+	'platform',
+	'priority',
+	'product_build',
+	'product_version',
+	'project',
+	'projection',
+	'reporter',
+	'reproducibility',
+	'resolution',
+	'severity',
+	'status',
+	'steps_to_reproduce',
+	'summary',
+	'tags',
+	'target_version',
+	'view_state',
+);
+
+/**
+ * An array of optional fields to show on the bug print page.
+ *
+ * The following optional fields are allowed:
+ *   - additional_info
+ *   - attachments
+ *   - category_id
+ *   - date_submitted
+ *   - description
+ *   - due_date
+ *   - eta
+ *   - fixed_in_version
+ *   - handler
+ *   - id
+ *   - last_updated
+ *   - os
+ *   - os_version
+ *   - platform
+ *   - priority
+ *   - product_build
+ *   - product_version
+ *   - project
+ *   - projection
+ *   - reporter
+ *   - reproducibility
+ *   - resolution
+ *   - severity
+ *   - status
+ *   - steps_to_reproduce
+ *   - summary
+ *   - tags
+ *   - target_version
+ *   - view_state
+ *
+ * Fields not listed above cannot be shown on the bug print page. All custom
+ * field values are shown on the bug print page.
+ *
+ * This setting can be set on a per-project basis by using the
+ * Manage => Manage Configuration administrator page.
+ *
+ * @global array $g_bug_print_page_fields
+ */
+$g_bug_print_page_fields = array (
+	'additional_info',
+	'attachments',
+	'category_id',
+	'date_submitted',
+	'description',
+	'due_date',
+	'eta',
+	'fixed_in_version',
+	'handler',
+	'id',
+	'last_updated',
+	'os',
+	'os_version',
 	'platform',
 	'priority',
 	'product_build',
@@ -2638,7 +2440,7 @@ $g_bug_view_page_fields = array(
  *   - id
  *   - last_updated
  *   - os
- *   - os_build
+ *   - os_version
  *   - platform
  *   - priority
  *   - product_build
@@ -2664,7 +2466,7 @@ $g_bug_view_page_fields = array(
  *
  * @global array $g_bug_update_page_fields
  */
-$g_bug_update_page_fields = array(
+$g_bug_update_page_fields = array (
 	'additional_info',
 	'category_id',
 	'date_submitted',
@@ -2676,7 +2478,7 @@ $g_bug_update_page_fields = array(
 	'id',
 	'last_updated',
 	'os',
-	'os_build',
+	'os_version',
 	'platform',
 	'priority',
 	'product_build',
@@ -2690,6 +2492,84 @@ $g_bug_update_page_fields = array(
 	'status',
 	'steps_to_reproduce',
 	'summary',
+	'target_version',
+	'view_state',
+);
+
+/**
+ * An array of optional fields to show on the bug change status page. This
+ * only changes the visibility of fields shown below the form used for
+ * updating the status of an issue.
+ *
+ * The following optional fields are allowed:
+ *   - additional_info
+ *   - attachments
+ *   - category_id
+ *   - date_submitted
+ *   - description
+ *   - due_date
+ *   - eta
+ *   - fixed_in_version
+ *   - handler
+ *   - id
+ *   - last_updated
+ *   - os
+ *   - os_version
+ *   - platform
+ *   - priority
+ *   - product_build
+ *   - product_version
+ *   - project
+ *   - projection
+ *   - reporter
+ *   - reproducibility
+ *   - resolution
+ *   - severity
+ *   - status
+ *   - steps_to_reproduce
+ *   - summary
+ *   - tags
+ *   - target_version
+ *   - view_state
+ *
+ * Fields not listed above cannot be shown on the bug change status page.
+ * Visibility of custom fields is handled via the Manage =>
+ * Manage Custom Fields administrator page (use the same settings as the
+ * bug view page).
+ *
+ * This setting can be set on a per-project basis by using the
+ * Manage => Manage Configuration administrator page.
+ *
+ * @global array $g_bug_change_status_page_fields
+ */
+$g_bug_change_status_page_fields = array (
+	'additional_info',
+	'attachments',
+	'category_id',
+	'date_submitted',
+	'description',
+	'due_date',
+	'eta',
+	'fixed_in_version',
+	'handler',
+	'id',
+	'last_updated',
+	'os',
+	'os_version',
+	'platform',
+	'priority',
+	'product_build',
+	'product_version',
+	'project',
+	'projection',
+	'reporter',
+	'reproducibility',
+	'resolution',
+	'severity',
+	'status',
+	'steps_to_reproduce',
+	'summary',
+	'tags',
 	'target_version',
 	'view_state',
 );
@@ -2726,17 +2606,9 @@ $g_view_bug_threshold = VIEWER;
 $g_monitor_bug_threshold = REPORTER;
 
 /**
- * Threshold needed to show the list of users monitoring a bug on the bug view pages.
- * @global integer $g_show_monitor_list_threshold
- */
-$g_show_monitor_list_threshold = DEVELOPER;
-
-/**
  * Access level needed to add other users to the list of users monitoring
  * a bug.
  * Look in the constant_inc.php file if you want to set a different value.
- * This setting should not be lower than $g_show_monitor_list_threshold.
- * @see $g_show_monitor_list_threshold
  * @global integer $g_monitor_add_others_bug_threshold
  */
 $g_monitor_add_others_bug_threshold = DEVELOPER;
@@ -2745,8 +2617,6 @@ $g_monitor_add_others_bug_threshold = DEVELOPER;
  * Access level needed to delete other users from the list of users
  * monitoring a bug.
  * Look in the constant_inc.php file if you want to set a different value.
- * This setting should not be lower than $g_show_monitor_list_threshold.
- * @see $g_show_monitor_list_threshold
  * @global integer $g_monitor_delete_others_bug_threshold
  */
 $g_monitor_delete_others_bug_threshold = DEVELOPER;
@@ -2781,13 +2651,15 @@ $g_update_bug_assign_threshold = '%handle_bug_threshold%';
 $g_private_bugnote_threshold = DEVELOPER;
 
 /**
- * access level needed to view handler
+ * access level needed to view handler in bug reports and notification email
+ * @todo yarick123: now it is implemented for notification email only
  * @global integer $g_view_handler_threshold
  */
 $g_view_handler_threshold = VIEWER;
 
 /**
- * access level needed to view history
+ * access level needed to view history in bug reports and notification email
+ * @todo yarick123: now it is implemented for notification email only
  * @global integer $g_view_history_threshold
  */
 $g_view_history_threshold = VIEWER;
@@ -2800,14 +2672,7 @@ $g_view_history_threshold = VIEWER;
 $g_bug_reminder_threshold = DEVELOPER;
 
 /**
- * Access level required to view bug history revisions.
- * Users can always see revisions for the issues and bugnotes they reported.
- * @global integer $g_bug_revision_view_threshold
- */
-$g_bug_revision_view_threshold = DEVELOPER;
-
-/**
- * Access level required to drop bug history revisions.
+ * Access lever required to drop bug history revisions
  * @global integer $g_bug_revision_drop_threshold
  */
 $g_bug_revision_drop_threshold = MANAGER;
@@ -2956,6 +2821,12 @@ $g_set_view_status_threshold = REPORTER;
 $g_change_view_status_threshold = UPDATER;
 
 /**
+ * Threshold needed to show the list of users monitoring a bug on the bug view pages.
+ * @global integer $g_show_monitor_list_threshold
+ */
+$g_show_monitor_list_threshold = DEVELOPER;
+
+/**
  * Threshold needed to be able to use stored queries
  * @global integer $g_stored_query_use_threshold
  */
@@ -3029,6 +2900,13 @@ $g_report_issues_for_unreleased_versions_threshold = DEVELOPER;
 $g_set_bug_sticky_threshold = MANAGER;
 
 /**
+ * The minimum access level for someone to be a member of the development team
+ * and appear on the project information page.
+ * @global integer $g_development_team_threshold
+ */
+$g_development_team_threshold = DEVELOPER;
+
+/**
  * this array sets the access thresholds needed to enter each status listed.
  * if a status is not listed, it falls back to $g_update_bug_status_threshold
  * example:
@@ -3074,24 +2952,9 @@ $g_allow_no_category = OFF;
 /**
  * limit reporters. Set to ON if you wish to limit reporters to only viewing
  * bugs that they report.
- * This feature is deprecated and replaced by the 'limit_view_unless_threshold'
- * option. It must be OFF to enable the new one.
- * @deprecated 2.24.0 Use $g_limit_view_unless_threshold instead
  * @global integer $g_limit_reporters
  */
 $g_limit_reporters = OFF;
-
-/**
- * Threshold at which a user can view all issues in the project (as allowed by other permissions).
- * Not meeting this threshold means the user can only see the issues they reported,
- * are handling or monitoring.
- * A value of ANYBODY means that all users have full visibility (as default)
- *
- * This is a replacement for old option {@see $g_limit_reporters}.
- *
- * @global integer $g_limit_view_unless_threshold
- */
-$g_limit_view_unless_threshold = ANYBODY;
 
 /**
  * reporter can close. Allow reporters to close the bugs they reported, after
@@ -3165,12 +3028,11 @@ $g_bugnote_link_tag = '~';
  * this is the prefix to use when creating links to bug views from bug counts
  * (eg. on the main page and the summary page).
  * Default is a temporary filter
- * only change the filter this time - 'view_all_set.php?type=' . FILTER_ACTION_PARSE_NEW . '&amp;temporary=y'
- * permanently change the filter - 'view_all_set.php?type=' . FILTER_ACTION_PARSE_NEW;
- * (FILTER_ACTION_xxx constants are defined in core/constant_inc.php)
+ * only change the filter this time - 'view_all_set.php?type=1&amp;temporary=y'
+ * permanently change the filter - 'view_all_set.php?type=1';
  * @global string $g_bug_count_hyperlink_prefix
  */
-$g_bug_count_hyperlink_prefix = 'view_all_set.php?type=' . FILTER_ACTION_PARSE_NEW . '&amp;temporary=y';
+$g_bug_count_hyperlink_prefix = 'view_all_set.php?type=1&amp;temporary=y';
 
 /**
  * The regular expression to use when validating new user login names
@@ -3183,7 +3045,16 @@ $g_bug_count_hyperlink_prefix = 'view_all_set.php?type=' . FILTER_ACTION_PARSE_N
  * http://rubular.com/.
  * @global string $g_user_login_valid_regex
  */
-$g_user_login_valid_regex = '/^([a-z\d\-.+_ ]+(@[a-z\d\-.]+\.[a-z]{2,18})?)$/i';
+$g_user_login_valid_regex = '/^([a-z\d\-.+_ ]+(@[a-z\d\-.]+\.[a-z]{2,4})?)$/i';
+
+/**
+ * Default user name prefix used to filter the list of users in
+ * manage_user_page.php.  Change this to 'A' (or any other
+ * letter) if you have a lot of users in the system and loading
+ * the manage users page takes a long time.
+ * @global string $g_default_manage_user_prefix
+ */
+$g_default_manage_user_prefix = 'ALL';
 
 /**
  * Default tag prefix used to filter the list of tags in
@@ -3241,6 +3112,13 @@ $g_status_colors = array(
 	'resolved'     => '#d2f5b0', # green  (chameleon   #8ae234)
 	'closed'       => '#c9ccc4'  # grey   (aluminum    #babdb6)
 );
+
+/**
+ * The padding level when displaying project ids
+ *  The project id will be padded with 0's up to the size given
+ * @global integer $g_display_project_padding
+ */
+$g_display_project_padding = 3;
 
 /**
  * The padding level when displaying bug ids
@@ -3340,8 +3218,9 @@ $g_bug_list_cookie = '%cookie_prefix%_BUG_LIST_COOKIE';
 $g_filter_by_custom_fields = ON;
 
 /**
- * The number of filter fields to display per row.
- * The default is 8.
+ * The number of custom fields to display per row.
+ * The default is 8. The value should be greater than or equal to 8.
+ * If lower, whitespace will appear on the right
  * @global integer $g_filter_custom_fields_per_row
  */
 $g_filter_custom_fields_per_row = 8;
@@ -3379,6 +3258,34 @@ $g_create_permalink_threshold = DEVELOPER;
  * @global string $g_create_short_url
  */
 $g_create_short_url = 'http://tinyurl.com/create.php?url=%s';
+
+#####################################
+# MantisBT Database Table Variables #
+#####################################
+
+/**
+ * table prefix
+ * To avoid the 30-char limit on identifiers in Oracle, the prefix
+ * should be set to blank or kept as short as possible (e.g. 'm')
+ * @global string $g_db_table_prefix
+ */
+$g_db_table_prefix = 'mantis';
+
+/**
+ * plugin table prefix
+ * To avoid the 30-char limit on identifiers in Oracle, the prefix
+ * should be kept as short as possible (e.g. 'plg')
+ * @global string $g_db_table_prefix
+ */
+$g_db_table_plugin_prefix	= 'plugin';
+
+/**
+ * table suffix
+ * To avoid the 30-char limit on identifiers in Oracle, the suffix
+ * should be set to blank or kept as short as possible
+ * @global string $g_db_table_suffix
+ */
+$g_db_table_suffix = '_table';
 
 #########################
 # MantisBT Enum Strings #
@@ -3528,6 +3435,12 @@ $g_css_include_file = 'default.css';
 $g_css_rtl_include_file = 'rtl.css';
 
 /**
+ * meta tags
+ * @global string $g_meta_include_file
+ */
+$g_meta_include_file = '';
+
+/**
  * A flag that indicates whether to use CDN (content delivery networks) for loading
  * javascript libraries and their associated CSS.  This improves performance for
  * loading MantisBT pages.  This can be disabled if it is desired that MantisBT
@@ -3550,7 +3463,7 @@ $g_default_home_page = 'my_view_page.php';
  * Specify where the user should be sent after logging out.
  * @global string $g_logout_redirect_page
  */
-$g_logout_redirect_page = AUTH_PAGE_USERNAME;
+$g_logout_redirect_page = 'login_page.php';
 
 ###########
 # Headers #
@@ -3624,32 +3537,14 @@ $g_custom_field_edit_after_create = ON;
 
 /**
  * Add custom options to the main menu.  For example:
- *
  * $g_main_menu_custom_options = array(
- *     array(
- *         'title'        => 'My Link',
- *         'access_level' => MANAGER,
- *         'url'          => 'my_link.php',
- *         'icon'         => 'fa-plug'
- *     ),
- *     array(
- *         'title'        => 'My Link2',
- *         'access_level' => ADMINISTRATOR,
- *         'url'          => 'my_link2.php',
- *         'icon'         => 'fa-plug'
- *     )
+ *     array( "My Link",  MANAGER,       'my_link.php' ),
+ *     array( "My Link2", ADMINISTRATOR, 'my_link2.php' )
  * );
  *
- * Note that if the caption is a localized string name (in strings_english.txt
- * or custom_strings_inc.php), then it will be replaced by the translated
- * string.  Options will only be added to the menu if the current logged in
- * user has the appropriate access level.
- *
- * Access level is an optional field, and no check will be done if it is not set.
- * Icon is an optional field, and 'fa-plug' will be used if it is not set.
- *
- * Use icons from http://fontawesome.io/icons/ - Add "fa-" prefix to icon name.
- *
+ * Note that if the caption is found in custom_strings_inc.php, then it will be
+ * replaced by the translated string.  Options will only be added to the menu
+ * if the current logged in user has the appropriate access level.
  * @global array $g_main_menu_custom_options
  */
 $g_main_menu_custom_options = array();
@@ -3667,85 +3562,81 @@ $g_main_menu_custom_options = array();
  * @global array $g_file_type_icons
  */
 $g_file_type_icons = array(
-	''		=> 'fa-file-text-o',
-	'7z'	=> 'fa-file-archive-o',
-	'ace'	=> 'fa-file-archive-o',
-	'arj'	=> 'fa-file-archive-o',
-	'bz2'	=> 'fa-file-archive-o',
-	'c'		=> 'fa-file-code-o',
-	'chm'	=> 'fa-file-o',
-	'cpp'	=> 'fa-file-code-o',
-	'css'	=> 'fa-file-code-o',
-	'csv'	=> 'fa-file-text-o',
-	'cxx'	=> 'fa-file-code-o',
-	'diff'	=> 'fa-file-text-o',
-	'doc'	=> 'fa-file-word-o',
-	'docx'	=> 'fa-file-word-o',
-	'dot'	=> 'fa-file-word-o',
-	'eml'	=> 'fa-envelope-o',
-	'htm'	=> 'fa-file-code-o',
-	'html'	=> 'fa-file-code-o',
-	'gif'	=> 'fa-file-image-o',
-	'gz'	=> 'fa-file-archive-o',
-	'jpe'	=> 'fa-file-image-o',
-	'jpg'	=> 'fa-file-image-o',
-	'jpeg'	=> 'fa-file-image-o',
-	'log'	=> 'fa-file-text-o',
-	'lzh'	=> 'fa-file-archive-o',
-	'md'	=> 'fa-file-text-o',
-	'mhtml'	=> 'fa-file-code-o',
-	'mid'	=> 'fa-file-audio-o',
-	'midi'	=> 'fa-file-audio-o',
-	'mov'	=> 'fa-file-movie-o',
-	'mp3'	=> 'fa-file-audio-o',
-	'mp4'	=> 'fa-file-movie-o',
-	'msg'	=> 'fa-envelope-o',
-	'one'	=> 'fa-file-o',
-	'ogg'	=> 'fa-file-movie-o',
-	'patch'	=> 'fa-file-text-o',
-	'pcx'	=> 'fa-file-image-o',
-	'pdf'	=> 'fa-file-pdf-o',
-	'png'	=> 'fa-file-image-o',
-	'pot'	=> 'fa-file-word-o',
-	'pps'	=> 'fa-file-powerpoint-o',
-	'ppt'	=> 'fa-file-powerpoint-o',
-	'pptx'	=> 'fa-file-powerpoint-o',
-	'pub'	=> 'fa-file-o',
-	'rar'	=> 'fa-file-archive-o',
-	'reg'	=> 'fa-file',
-	'rtf'	=> 'fa-file-word-o',
-	'tar'	=> 'fa-file-archive-o',
-	'tgz'	=> 'fa-file-archive-o',
-	'txt'	=> 'fa-file-text-o',
-	'uc2'	=> 'fa-file-archive-o',
-	'vsd'	=> 'fa-file-o',
-	'vsl'	=> 'fa-file-o',
-	'vss'	=> 'fa-file-o',
-	'vst'	=> 'fa-file-o',
-	'vsu'	=> 'fa-file-o',
-	'vsw'	=> 'fa-file-o',
-	'vsx'	=> 'fa-file-o',
-	'vtx'	=> 'fa-file-o',
-	'wav'	=> 'fa-file-audio-o',
-	'wbk'	=> 'fa-file-word-o',
-	'wma'	=> 'fa-file-audio-o',
-	'wmv'	=> 'fa-file-movie-o',
-	'wri'	=> 'fa-file-word-o',
-	'xlk'	=> 'fa-file-excel-o',
-	'xls'	=> 'fa-file-excel-o',
-	'xlsx'	=> 'fa-file-excel-o',
-	'xlt'	=> 'fa-file-excel-o',
-	'xml'	=> 'fa-file-code-o',
-	'zip'	=> 'fa-file-archive-o',
-	'?'	=> 'fa-file-o' );
+	''	=> 'text.gif',
+	'7z'	=> 'zip.gif',
+	'ace'	=> 'zip.gif',
+	'arj'	=> 'zip.gif',
+	'bz2'	=> 'zip.gif',
+	'c'	=> 'cpp.gif',
+	'chm'	=> 'chm.gif',
+	'cpp'	=> 'cpp.gif',
+	'css'	=> 'css.gif',
+	'csv'	=> 'csv.gif',
+	'cxx'	=> 'cpp.gif',
+	'diff'	=> 'text.gif',
+	'doc'	=> 'doc.gif',
+	'docx'	=> 'doc.gif',
+	'dot'	=> 'doc.gif',
+	'eml'	=> 'eml.gif',
+	'htm'	=> 'html.gif',
+	'html'	=> 'html.gif',
+	'gif'	=> 'gif.gif',
+	'gz'	=> 'zip.gif',
+	'jpe'	=> 'jpg.gif',
+	'jpg'	=> 'jpg.gif',
+	'jpeg'	=> 'jpg.gif',
+	'log'	=> 'text.gif',
+	'lzh'	=> 'zip.gif',
+	'mhtml'	=> 'html.gif',
+	'mid'	=> 'mid.gif',
+	'midi'	=> 'mid.gif',
+	'mov'	=> 'mov.gif',
+	'msg'	=> 'eml.gif',
+	'one'	=> 'one.gif',
+	'patch'	=> 'text.gif',
+	'pcx'	=> 'pcx.gif',
+	'pdf'	=> 'pdf.gif',
+	'png'	=> 'png.gif',
+	'pot'	=> 'pot.gif',
+	'pps'	=> 'pps.gif',
+	'ppt'	=> 'ppt.gif',
+	'pptx'	=> 'ppt.gif',
+	'pub'	=> 'pub.gif',
+	'rar'	=> 'zip.gif',
+	'reg'	=> 'reg.gif',
+	'rtf'	=> 'doc.gif',
+	'tar'	=> 'zip.gif',
+	'tgz'	=> 'zip.gif',
+	'txt'	=> 'text.gif',
+	'uc2'	=> 'zip.gif',
+	'vsd'	=> 'vsd.gif',
+	'vsl'	=> 'vsl.gif',
+	'vss'	=> 'vsd.gif',
+	'vst'	=> 'vst.gif',
+	'vsu'	=> 'vsd.gif',
+	'vsw'	=> 'vsd.gif',
+	'vsx'	=> 'vsd.gif',
+	'vtx'	=> 'vst.gif',
+	'wav'	=> 'wav.gif',
+	'wbk'	=> 'wbk.gif',
+	'wma'	=> 'wav.gif',
+	'wmv'	=> 'mov.gif',
+	'wri'	=> 'wri.gif',
+	'xlk'	=> 'xls.gif',
+	'xls'	=> 'xls.gif',
+	'xlsx'	=> 'xls.gif',
+	'xlt'	=> 'xlt.gif',
+	'xml'	=> 'xml.gif',
+	'zip'	=> 'zip.gif',
+	'?'	=> 'generic.gif' );
 
 /**
  *
- * Content types which will be overridden when downloading files
+ * Content types which will be overriden when downloading files
  *
  * @global array $g_file_download_content_type_overrides
  */
-$g_file_download_content_type_overrides = array(
+$g_file_download_content_type_overrides = array (
 	'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 	'dotx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
 	'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
@@ -3760,22 +3651,31 @@ $g_file_download_content_type_overrides = array(
  * Status to icon mapping
  * @global array $g_status_icon_arr
  */
-$g_status_icon_arr = array(
+$g_status_icon_arr = array (
 	NONE      => '',
-	LOW       => 'fa-chevron-down fa-lg green',
-	NORMAL    => 'fa-minus fa-lg orange2',
-	HIGH      => 'fa-chevron-up fa-lg red',
-	URGENT    => 'fa-arrow-up fa-lg red',
-	IMMEDIATE => 'fa-exclamation-triangle fa-lg red'
+	LOW       => 'priority_low_1.gif',
+	NORMAL    => 'priority_normal.gif',
+	HIGH      => 'priority_1.gif',
+	URGENT    => 'priority_2.gif',
+	IMMEDIATE => 'priority_3.gif'
 );
 
 /**
  * Sort direction to icon mapping
  * @global array $g_sort_icon_arr
  */
-$g_sort_icon_arr = array(
-	ASCENDING  => 'fa-caret-up',
-	DESCENDING => 'fa-caret-down'
+$g_sort_icon_arr = array (
+	ASCENDING  => 'up.gif',
+	DESCENDING => 'down.gif'
+);
+
+/**
+ * Read status to icon mapping
+ * @global array $g_unread_icon_arr
+ */
+$g_unread_icon_arr = array (
+	READ   => 'mantis_space.gif',
+	UNREAD => 'unread.gif'
 );
 
 ####################
@@ -3793,7 +3693,7 @@ $g_my_view_bug_count = 10;
  * A box that is not to be shown can have its value set to 0
  * @global array $g_my_view_boxes
  */
-$g_my_view_boxes = array(
+$g_my_view_boxes = array (
 	'assigned'      => '1',
 	'unassigned'    => '2',
 	'reported'      => '3',
@@ -3804,6 +3704,13 @@ $g_my_view_boxes = array(
 	'verify'        => '0',
 	'my_comments'   => '0'
 );
+
+/**
+ * Toggle whether 'My View' boxes are shown in a fixed position (i.e. adjacent
+ * boxes start at the same vertical position)
+ * @global integer $g_my_view_boxes_fixed_position
+ */
+$g_my_view_boxes_fixed_position = ON;
 
 
 #############
@@ -3827,7 +3734,8 @@ $g_rss_enabled = ON;
  * Show issue relationships using graphs.
  *
  * In order to use this feature, you must first install GraphViz.
- * @see https://www.graphviz.org/ Graphviz homepage
+ *
+ * Graphviz homepage:    http://www.research.att.com/sw/tools/graphviz/
  *
  * Refer to the notes near the top of core/graphviz_api.php and
  * core/relationship_graph_api.php for more information.
@@ -4085,12 +3993,6 @@ $g_time_tracking_reporting_threshold = MANAGER;
  */
 $g_time_tracking_without_note = ON;
 
-/**
- * default billing rate per hour
- * @global integer $g_time_tracking_billing_rate
- */
-$g_time_tracking_billing_rate = 0;
-
 ############################
 # Profile Related Settings #
 ############################
@@ -4199,33 +4101,6 @@ $g_due_date_view_threshold = NOBODY;
  */
 $g_due_date_default = '';
 
-/**
- * Due date warning levels.
- *
- * A variable number of Levels (defined as a number of seconds going backwards
- * from the current timestamp, compared to an issue's due date) can be defined.
- * Levels must be defined in ascending order.
- *
- * - The first entry (array key 0) defines "Overdue". Normally and by default,
- *   its value is `0` meaning that issues will be marked overdue as soon as
- *   their due date has passed. However, it is also possible to set it to a
- *   higher value to flag overdue issues earlier, or even use a negative value
- *   to allow a "grace period" after due date.
- * - Array keys 1 and 2 offer two levels of "Due soon": orange and green.
- *   By default, only the first one is set, to 7 days.
- *
- * Out of the box, MantisBT allows for 3 warning levels. Additional ones may
- * be defined, but in that case new `due-N` CSS rules (where N is the
- * array's index) must be created otherwise the extra levels will not be
- * highlighted in the UI.
- *
- * @global  array $g_due_date_warning_levels
- */
-$g_due_date_warning_levels = array(
-	0,
-	7 * SECONDS_PER_DAY,
-);
-
 ################
 # Sub-projects #
 ################
@@ -4234,8 +4109,6 @@ $g_due_date_warning_levels = array(
  * Whether sub-projects feature should be enabled.  Before turning this flag OFF,
  * make sure all sub-projects are moved to top level projects, otherwise
  * they won't be accessible.
- *
- * @global integer $g_subprojects_enabled
  */
 $g_subprojects_enabled = ON;
 
@@ -4246,8 +4119,6 @@ $g_subprojects_inherit_categories = ON;
 
 /**
  * Sub-projects should inherit versions from parent projects.
- *
- * @global integer $g_subprojects_inherit_versions
  */
 $g_subprojects_inherit_versions = ON;
 
@@ -4303,25 +4174,30 @@ $g_show_queries_count = OFF;
  * Recommended config_inc.php settings for developers (these are automatically
  * set if the server is localhost):
  * $g_display_errors = array(
+ *     E_USER_ERROR        => DISPLAY_ERROR_HALT,
+ *     E_RECOVERABLE_ERROR => DISPLAY_ERROR_HALT,
  *     E_WARNING           => DISPLAY_ERROR_HALT,
  *     E_ALL               => DISPLAY_ERROR_INLINE,
  * );
  *
- * NOTICE: E_USER_ERROR, E_RECOVERABLE_ERROR and E_ERROR will always be set
- * to DISPLAY_ERROR_HALT internally, regardless of the configured value.
+ * WARNING: E_USER_ERROR should always be set to DISPLAY_ERROR_HALT. Using
+ * another value will cause program execution to continue, which may lead to
+ * data integrity issues and/or cause MantisBT to function incorrectly.
  *
  * @global array $g_display_errors
  */
-$g_display_errors = array();
+$g_display_errors = array(
+	E_USER_ERROR        => DISPLAY_ERROR_HALT,
+	E_RECOVERABLE_ERROR => DISPLAY_ERROR_HALT,
+);
 
 # Add developers defaults when server is localhost
 # Note: intentionally not using SERVER_ADDR as it's not guaranteed to exist
-if( isset( $_SERVER['SERVER_NAME'] ) &&
-	( strcasecmp( $_SERVER['SERVER_NAME'], 'localhost' ) == 0 ||
-	  $_SERVER['SERVER_NAME'] == '127.0.0.1' )
-) {
+if( isset( $_SERVER['SERVER_NAME'] ) && ( strcasecmp( $_SERVER['SERVER_NAME'], 'localhost' ) == 0
+ || $_SERVER['SERVER_NAME'] == '127.0.0.1'
+) ) {
 	$g_display_errors[E_WARNING] = DISPLAY_ERROR_HALT;
-	$g_display_errors[E_ALL] = DISPLAY_ERROR_INLINE;
+	$g_display_errors[E_ALL]     = DISPLAY_ERROR_INLINE;
 }
 
 /**
@@ -4355,7 +4231,7 @@ $g_stop_on_errors = OFF;
  * The available log channels are:
  *
  * LOG_NONE, LOG_EMAIL, LOG_EMAIL_RECIPIENT, LOG_EMAIL_VERBOSE, LOG_FILTERING,
- * LOG_AJAX, LOG_LDAP, LOG_DATABASE, LOG_WEBSERVICE, LOG_PLUGIN, LOG_ALL
+ * LOG_AJAX, LOG_LDAP, LOG_DATABASE, LOG_WEBSERVICE, LOG_ALL
  *
  * and can be combined using
  * {@link http://php.net/language.operators.bitwise PHP bitwise operators}
@@ -4376,6 +4252,9 @@ $g_log_level = LOG_NONE;
  * - 'file':    Log to a specific file, specified as an absolute path, e.g.
  *              'file:/var/log/mantis.log' (Unix) or
  *              'file:c:/temp/mantisbt.log' (Windows)
+ * - 'firebug': make use of Firefox {@link http://getfirebug.com/ Firebug Add-on}.
+ *              If user is not running firefox, this options falls back to
+ *              the default php error log settings.
  * - 'page':    Display log output at bottom of the page. See also
  *              {@link $g_show_log_threshold} to restrict who can see log data.
  *
@@ -4399,123 +4278,28 @@ $g_show_log_threshold = ADMINISTRATOR;
 
 /**
  * The following list of variables should never be in the database.
- *
- * It is used to bypass the database lookup and look in this or the
- * config_inc.php files for appropriate global settings.
- *
+ * It is used to bypass the database lookup and look here for appropriate global settings.
  * @global array $g_global_settings
  */
 $g_global_settings = array(
-	'absolute_path',
-	'absolute_path_default_upload_folder',
-	'admin_checks',
-	'allow_anonymous_login',
-	'allow_permanent_cookie',
-	'allow_signup',
-	'anonymous_account',
-	'bottom_include_page',
-	'bug_list_cookie',
-	'cdn_enabled',
-	'class_path',
-	'compress_html',
-	'cookie_domain',
-	'cookie_path',
-	'cookie_prefix',
-	'cookie_time_length',
-	'copyright_statement',
-	'core_path',
-	'crypto_master_salt',
-	'css_include_file',
-	'css_rtl_include_file',
-	'custom_headers',
-	'database_name',
-	'db_password',
-	'db_table_prefix',
-	'db_table_suffix',
-	'db_type',
-	'db_username',
-	'debug_email',
-	'default_home_page',
-	'default_language',
-	'display_errors',
-	'dot_tool',
-	'email_dkim_domain',
-	'email_dkim_enable',
-	'email_dkim_identity',
-	'email_dkim_passphrase',
-	'email_dkim_private_key_file_path',
-	'email_dkim_private_key_string',
-	'email_dkim_selector',
-	'email_ensure_unique',
-	'email_login_enabled',
-	'email_retry_in_days',
-	'email_smime_cert_file',
-	'email_smime_enable',
-	'email_smime_extracerts_file',
-	'email_smime_key_file',
-	'email_smime_key_password',
-	'fallback_language',
-	'favicon_image',
-	'file_type_icons',
-	'fileinfo_magic_db_file',
-	'form_security_validation',
-	'global_settings',
-	'hostname',
-	'html_valid_tags',
-	'html_valid_tags_single_line',
-	'impersonate_user_threshold',
-	'language_auto_map',
-	'language_path',
-	'ldap_bind_dn',
-	'ldap_bind_passwd',
-	'ldap_follow_referrals',
-	'ldap_network_timeout',
-	'ldap_organization',
-	'ldap_protocol_version',
-	'ldap_realname_field',
-	'ldap_root_dn',
-	'ldap_server',
-	'ldap_simulation_file_path',
-	'ldap_tls_protocol_min',
-	'ldap_uid_field',
-	'ldap_use_starttls',
-	'library_path',
-	'login_method',
-	'logo_image',
-	'logo_url',
-	'logout_cookie',
-	'logout_redirect_page',
-	'long_process_timeout',
-	'manage_config_cookie',
-	'manual_url',
-	'neato_tool',
-	'path',
-	'plugin_path',
-	'plugins_enabled',
-	'project_cookie',
-	'public_config_names',
-	'session_save_path',
-	'session_validation',
-	'short_path',
-	'show_detailed_errors',
-	'show_memory_usage',
-	'show_queries_count',
-	'show_timer',
-	'show_version',
-	'stop_on_errors',
-	'string_cookie',
-	'subprojects_enabled',
-	'top_include_page',
-	'use_ldap_email',
-	'use_ldap_realname',
-	'validate_email',
-	'version_suffix',
-	'view_all_cookie',
-	'webmaster_email',
-	'wiki_enable',
-	'wiki_engine',
-	'wiki_engine_url',
-	'wiki_root_namespace',
+	'global_settings', 'admin_checks', 'allow_signup', 'allow_anonymous_login',
+	'anonymous_account', 'compress_html', 'allow_permanent_cookie',
+	'cookie_time_length', 'cookie_path', 'cookie_domain',
+	'cookie_prefix', 'string_cookie', 'project_cookie', 'view_all_cookie',
+	'manage_config_cookie', 'manage_user_cookie', 'logout_cookie',
+	'bug_list_cookie', 'crypto_master_salt', 'custom_headers',
+	'database_name', 'db_username', 'db_password', 'db_schema', 'db_type',
+	'db_table_prefix','db_table_suffix', 'display_errors', 'form_security_validation',
+	'hostname','html_valid_tags', 'html_valid_tags_single_line', 'default_language',
+	'language_auto_map', 'fallback_language', 'login_method', 'plugins_enabled', 'session_handler',
+	'session_save_path', 'session_validation', 'show_detailed_errors', 'show_queries_count',
+	'stop_on_errors', 'version_suffix', 'debug_email',
+	'fileinfo_magic_db_file', 'css_include_file', 'css_rtl_include_file', 'meta_include_file',
+	'file_type_icons', 'path', 'icon_path', 'short_path', 'absolute_path', 'core_path',
+	'class_path','library_path', 'language_path', 'absolute_path_default_upload_folder',
+	'ldap_simulation_file_path', 'plugin_path', 'bottom_include_page', 'top_include_page',
+	'default_home_page', 'logout_redirect_page', 'manual_url', 'logo_url', 'wiki_engine_url',
+	'neato_tool', 'dot_tool'
 );
 
 /**
@@ -4538,7 +4322,6 @@ $g_public_config_names = array(
 	'allow_file_upload',
 	'allow_freetext_in_profile_fields',
 	'allow_no_category',
-	'allow_parent_of_unresolved_to_close',
 	'allow_permanent_cookie',
 	'allow_reporter_close',
 	'allow_reporter_reopen',
@@ -4563,20 +4346,18 @@ $g_public_config_names = array(
 	'bug_reminder_threshold',
 	'bug_reopen_resolution',
 	'bug_reopen_status',
-	'bug_report_page_fields',
 	'bug_resolution_fixed_threshold',
 	'bug_resolution_not_fixed_threshold',
 	'bug_resolved_status_threshold',
 	'bug_revision_drop_threshold',
-	'bug_revision_view_threshold',
 	'bug_submit_status',
-	'bug_update_page_fields',
-	'bug_view_page_fields',
 	'bugnote_link_tag',
 	'bugnote_order',
 	'bugnote_user_change_view_state_threshold',
 	'bugnote_user_delete_threshold',
 	'bugnote_user_edit_threshold',
+	'calendar_date_format',
+	'calendar_js_date_format',
 	'cdn_enabled',
 	'change_view_status_threshold',
 	'check_mx_record',
@@ -4590,17 +4371,11 @@ $g_public_config_names = array(
 	'create_short_url',
 	'css_include_file',
 	'css_rtl_include_file',
-	'csv_columns',
 	'csv_separator',
 	'custom_field_edit_after_create',
 	'custom_field_link_threshold',
 	'custom_field_type_enum_string',
-	'custom_group_actions',
-	'custom_headers',
-	'date_partitions',
-	'datetime_picker_format',
 	'default_bug_additional_info',
-	'default_bug_description',
 	'default_bug_eta',
 	'default_bug_priority',
 	'default_bug_projection',
@@ -4637,8 +4412,8 @@ $g_public_config_names = array(
 	'default_language',
 	'default_limit_view',
 	'default_manage_tag_prefix',
+	'default_manage_user_prefix',
 	'default_new_account_access_level',
-	'default_notify_flags',
 	'default_project_view_status',
 	'default_redirect_delay',
 	'default_refresh_delay',
@@ -4648,20 +4423,17 @@ $g_public_config_names = array(
 	'delete_bug_threshold',
 	'delete_bugnote_threshold',
 	'delete_project_threshold',
+	'development_team_threshold',
+	'differentiate_duplicates',
 	'disallowed_files',
 	'display_bug_padding',
 	'display_bugnote_padding',
-	'display_errors',
+	'display_project_padding',
 	'download_attachments_threshold',
 	'due_date_default',
 	'due_date_update_threshold',
 	'due_date_view_threshold',
-	'due_date_warning_levels',
 	'email_ensure_unique',
-	'email_dkim_domain',
-	'email_dkim_enable',
-	'email_dkim_identity',
-	'email_dkim_selector',
 	'email_login_enabled',
 	'email_notifications_verbose',
 	'email_padding_length',
@@ -4676,18 +4448,12 @@ $g_public_config_names = array(
 	'enable_projection',
 	'enable_sponsorship',
 	'eta_enum_string',
-	'excel_columns',
 	'fallback_language',
 	'favicon_image',
-	'file_download_content_type_overrides',
-	'file_type_icons',
 	'file_upload_max_num',
 	'filter_by_custom_fields',
 	'filter_custom_fields_per_row',
 	'filter_position',
-	'font_family',
-	'font_family_choices',
-	'font_family_choices_local',
 	'forward_year_count',
 	'from_email',
 	'from_name',
@@ -4700,19 +4466,14 @@ $g_public_config_names = array(
 	'html_valid_tags_single_line',
 	'html_valid_tags',
 	'impersonate_user_threshold',
-	'issue_activity_note_attachments_seconds_threshold',
-	'language_auto_map',
-	'language_choices_arr',
-	'limit_email_domains',
+	'inline_file_exts',
 	'limit_reporters',
-	'limit_view_unless_threshold',
 	'logo_image',
 	'logo_url',
 	'logout_cookie',
 	'logout_redirect_page',
 	'long_process_timeout',
 	'lost_password_feature',
-	'main_menu_custom_options',
 	'manage_config_cookie',
 	'manage_configuration_threshold',
 	'manage_custom_fields_threshold',
@@ -4729,13 +4490,14 @@ $g_public_config_names = array(
 	'max_lost_password_in_progress_count',
 	'mentions_enabled',
 	'mentions_tag',
+	'meta_include_file',
 	'min_refresh_delay',
 	'minimum_sponsorship_amount',
 	'monitor_add_others_bug_threshold',
 	'monitor_bug_threshold',
 	'monitor_delete_others_bug_threshold',
 	'move_bug_threshold',
-	'my_view_boxes',
+	'my_view_boxes_fixed_position',
 	'my_view_bug_count',
 	'news_enabled',
 	'news_limit_method',
@@ -4744,15 +4506,10 @@ $g_public_config_names = array(
 	'normal_date_format',
 	'notify_flags',
 	'notify_new_user_created_threshold_min',
-	'plugin_mime_types',
 	'plugins_enabled',
-	'plugins_force_installed',
 	'preview_attachments_inline_max_size',
-	'preview_image_extensions',
 	'preview_max_height',
 	'preview_max_width',
-	'preview_text_extensions',
-	'print_issues_page_columns',
 	'priority_enum_string',
 	'priority_significant_threshold',
 	'private_bug_threshold',
@@ -4782,7 +4539,6 @@ $g_public_config_names = array(
 	'reporter_summary_limit',
 	'reproducibility_enum_string',
 	'resolution_enum_string',
-	'resolution_multipliers',
 	'return_path_email',
 	'roadmap_update_threshold',
 	'roadmap_view_threshold',
@@ -4790,10 +4546,8 @@ $g_public_config_names = array(
 	'search_title',
 	'set_bug_sticky_threshold',
 	'set_configuration_threshold',
-	'set_status_threshold',
 	'set_view_status_threshold',
 	'severity_enum_string',
-	'severity_multipliers',
 	'severity_significant_threshold',
 	'short_date_format',
 	'show_assigned_names',
@@ -4802,6 +4556,7 @@ $g_public_config_names = array(
 	'show_bug_project_links',
 	'show_changelog_dates',
 	'show_detailed_errors',
+	'show_footer_menu',
 	'show_log_threshold',
 	'show_memory_usage',
 	'show_monitor_list_threshold',
@@ -4819,14 +4574,12 @@ $g_public_config_names = array(
 	'show_version',
 	'signup_use_captcha',
 	'sort_by_last_name',
-	'sort_icon_arr',
 	'sponsor_threshold',
 	'sponsorship_currency',
 	'sponsorship_enum_string',
-	'status_colors',
 	'status_enum_string',
-	'status_enum_workflow',
-	'status_icon_arr',
+	'status_legend_position',
+	'status_percentage_legend',
 	'stop_on_errors',
 	'store_reminders',
 	'stored_query_create_shared_threshold',
@@ -4845,7 +4598,6 @@ $g_public_config_names = array(
 	'tag_edit_threshold',
 	'tag_separator',
 	'tag_view_threshold',
-	'time_tracking_billing_rate',
 	'time_tracking_edit_threshold',
 	'time_tracking_enabled',
 	'time_tracking_reporting_threshold',
@@ -4874,7 +4626,6 @@ $g_public_config_names = array(
 	'view_filters',
 	'view_handler_threshold',
 	'view_history_threshold',
-	'view_issues_page_columns',
 	'view_proj_doc_threshold',
 	'view_sponsorship_details_threshold',
 	'view_sponsorship_total_threshold',
@@ -4889,7 +4640,6 @@ $g_public_config_names = array(
 	'webservice_readonly_access_level_threshold',
 	'webservice_readwrite_access_level_threshold',
 	'webservice_resolution_enum_default_when_not_found',
-	'webservice_rest_enabled',
 	'webservice_severity_enum_default_when_not_found',
 	'webservice_specify_reporter_on_add_access_level_threshold',
 	'webservice_status_enum_default_when_not_found',
@@ -5012,21 +4762,3 @@ $g_webservice_error_when_version_not_found = ON;
  */
 $g_webservice_version_when_not_found = '';
 
-/**
- * Whether the REST API is enabled or not.  Note that this flag only
- * impacts API Token based auth.  Hence, even if the API is disabled, it can still be
- * used from the Web UI using cookie based authentication.
- *
- * @global integer $g_webservice_rest_enabled
- */
-$g_webservice_rest_enabled = ON;
-
-####################
-# Issue Activities #
-####################
-
-/**
- * If a user submits a note with an attachments (with the specified # of seconds)
- * the attachment is linked to the note.  Or 0 for disabling this feature.
- */
-$g_issue_activity_note_attachments_seconds_threshold = 3;

@@ -15,11 +15,11 @@ namespace mantis_tests
         [TestFixtureSetUp]
         public void setUpConfig()
         {
-            app.Ftp.BackupFile("/config_defaults_inc.php");
+            /*app.Ftp.BackupFile("/config_defaults_inc.php");
             using (Stream localFile = File.Open("config_defaults_inc.php", FileMode.Open))
             {
                 app.Ftp.Upload("/config_defaults_inc.php", localFile);
-            }
+            }*/
                 
 
         }
@@ -44,7 +44,7 @@ namespace mantis_tests
         [TestFixtureTearDown]
         public void restoreConfig()
         {
-            app.Ftp.RestoreBackupFile("/config_defaults_inc.php");
+            //app.Ftp.RestoreBackupFile("/config_defaults_inc.php");
         }
     }
 }

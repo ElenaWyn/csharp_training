@@ -16,15 +16,33 @@ namespace mantis_tests
         protected bool acceptNextAlert = true;
         private static ThreadLocal<ApplicationManager> app = new ThreadLocal<ApplicationManager>();
         public RegistrationHelper Reg;
-        public FtpHelper Ftp;
+        public LogInHelper Login;
+        //public FtpHelper Ftp;
+        public ProjectManagmentHelper Proj;
+
+
+
+        /*
+        FirefoxOptions op = new FirefoxOptions
+        {
+            AcceptInsecureCertificates = true
+        };*/
+
+
+
+
+
+
+
 
         private ApplicationManager()
         {
             driver = new FirefoxDriver();
-            baseURL = "https://localhost/mantisbt-2.25.0/login_page.php";
+            baseURL = "http://localhost/mantisbt-1.3.20/login_page.php";
             Reg = new RegistrationHelper(this);
-            Ftp = new FtpHelper(this);
-            
+            //Ftp = new FtpHelper(this);
+            Login = new LogInHelper(this);
+            Proj = new ProjectManagmentHelper(this);
             
         }
 
@@ -46,7 +64,7 @@ namespace mantis_tests
            if (! app.IsValueCreated)
             {
                 ApplicationManager newInstance = new ApplicationManager();
-                newInstance.driver.Url = "https://localhost/mantisbt-2.25.0/login_page.php";
+                newInstance.driver.Url = "http://localhost/mantisbt-1.3.20/login_page.php";
                 app.Value = newInstance;
             }
             return app.Value;
