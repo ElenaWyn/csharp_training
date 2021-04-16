@@ -19,6 +19,7 @@ namespace mantis_tests
         public LogInHelper Login;
         //public FtpHelper Ftp;
         public ProjectManagmentHelper Proj;
+        public APIHelper APIHelper { get; private set; }
 
 
 
@@ -43,7 +44,9 @@ namespace mantis_tests
             //Ftp = new FtpHelper(this);
             Login = new LogInHelper(this);
             Proj = new ProjectManagmentHelper(this);
-            
+            APIHelper = new APIHelper(this);
+
+
         }
 
          ~ApplicationManager()

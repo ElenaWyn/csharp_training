@@ -30,44 +30,65 @@ namespace mantis_tests
         public void ProjectAddTest()
         {
             app.Proj.GoToProjectsPage();
-            Dictionary<string, string> oldProjects = app.Proj.GetProjectsList();
+            List<Mantis.ProjectData> oldProjects = app.Proj.GetProjectsListFromWebService(acc);
+            //Dictionary<string, string> oldProjects = app.Proj.GetProjectsList();
             string projectName = GenerateRandomString(10);
             app.Proj.CreateNewProject(projectName);
             app.Proj.GoToProjectsPage();
             IWebElement pr = app.Driver.FindElement(By.LinkText(projectName));
             KeyValuePair<string, string> projToManipulate = app.Proj.projectToManipulate(pr);
             
-            Dictionary<string, string> newProjects = app.Proj.GetProjectsList();
-            newProjects.Remove(projToManipulate.Key);
+            //Dictionary<string, string> newProjects = app.Proj.GetProjectsList();
+            List<Mantis.ProjectData> newProjects = app.Proj.GetProjectsListFromWebService(acc);
+            Mantis.ProjectData newProject = new Mantis.ProjectData();
+            newProject.id = projToManipulate.Value;
+            newProject.name = projToManipulate.Key;
+            oldProjects.Add(newProject);
 
-            oldProjects.Values.OrderBy(v=>v);
-            newProjects.Values.OrderBy(v => v);
+            List<ProjectData> old = app.Proj.FromMantisToThisProjectData(oldProjects);
+            List<ProjectData> afterChanges = app.Proj.FromMantisToThisProjectData(newProjects);
+            old.Sort();
+            afterChanges.Sort();
 
-            Assert.AreEqual(oldProjects, newProjects);
+            //oldProjects.Values.OrderBy(v=>v);
+            //newProjects.Values.OrderBy(v => v);
+
+            Assert.AreEqual(old, afterChanges);
         }
 
         [Test]
         public void ProjectDeleteTest()
         {
-            app.Proj.GoToProjectsPage();
-            Dictionary<string, string> oldProjects = app.Proj.GetProjectsList();
+            //app.Proj.GoToProjectsPage();
+            //Dictionary<string, string> oldProjects = app.Proj.GetProjectsList();
+            List<Mantis.ProjectData> oldProjects = app.Proj.GetProjectsListFromWebService(acc);
             if (oldProjects.Count == 0)
             {
-                app.Proj.CreateNewProject(GenerateRandomString(10));
+                //app.Proj.CreateNewProject(GenerateRandomString(10));
+                app.APIHelper.CreateNewProject(acc);
+                oldProjects = app.Proj.GetProjectsListFromWebService(acc);
             }
             Random rn = new Random();
             int which = rn.Next(1, oldProjects.Count);
-            List<KeyValuePair<string, string>> listOfProjects =  oldProjects.ToList<KeyValuePair<string, string>>();
-            KeyValuePair<string, string> projectToDelete = listOfProjects[which];
-            string name = projectToDelete.Key;
-            app.Proj.DeleteProject(name);
-            oldProjects.Remove(name);
-            
-            Dictionary<string, string> newProjects = app.Proj.GetProjectsList();
-            oldProjects.Values.OrderBy(v => v);
-            newProjects.Values.OrderBy(v => v);
+            Mantis.ProjectData projectToDelete = oldProjects[which];
+            //List<KeyValuePair<string, string>> listOfProjects =  oldProjects.ToList<KeyValuePair<string, string>>();
+            //KeyValuePair<string, string> projectToDelete = listOfProjects[which];
+            //string name = projectToDelete.Key;
+            app.Proj.DeleteProject(projectToDelete.name);
+            oldProjects.Remove(projectToDelete);
 
-            Assert.AreEqual(oldProjects, newProjects);
+            //Dictionary<string, string> newProjects = app.Proj.GetProjectsList();
+            List<Mantis.ProjectData> newProjects = app.Proj.GetProjectsListFromWebService(acc);
+
+            //oldProjects.Values.OrderBy(v => v);
+            //newProjects.Values.OrderBy(v => v);
+
+            List<ProjectData> old = app.Proj.FromMantisToThisProjectData(oldProjects);
+            List<ProjectData> afterChanges = app.Proj.FromMantisToThisProjectData(newProjects);
+            old.Sort();
+            afterChanges.Sort();
+
+            Assert.AreEqual(old, afterChanges);
 
         }
 

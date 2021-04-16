@@ -42,6 +42,14 @@ namespace mantis_tests
             return IDs;
         }
 
+        public List<Mantis.ProjectData> GetProjectsListFromWebService(AccountData acc)
+        {
+            Mantis.MantisConnectPortTypeClient client = new Mantis.MantisConnectPortTypeClient();
+            Mantis.ProjectData[] projects = client.mc_projects_get_user_accessible(acc.Name, acc.Password);
+            List<Mantis.ProjectData> IDs = projects.ToList();
+            return IDs;
+        }
+
         public KeyValuePair<string,string> projectToManipulate(IWebElement pr)
         {
             string href = pr.GetAttribute("href");
@@ -63,6 +71,21 @@ namespace mantis_tests
             driver.FindElement(By.XPath("//input[@value='Удалить проект']")).Click();
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
             wait.Until(ExpectedConditions.ElementExists(By.TagName("thead")));
+        }
+
+        public List<ProjectData> FromMantisToThisProjectData (List<Mantis.ProjectData> listOfProjects)
+        {
+            List<ProjectData> list = new List<ProjectData>();
+            foreach (Mantis.ProjectData p in listOfProjects)
+            {
+                ProjectData proj = new ProjectData()
+                {
+                    ProjectName = p.name,
+                    ID = p.id
+                };
+                list.Add(proj);
+            }
+            return list;
         }
 
     }
