@@ -21,5 +21,19 @@ namespace mantis_tests
             }
             return ID.CompareTo(other.ID);
         }
+
+        public override bool Equals(Object other)
+        {
+            ProjectData pr = other as ProjectData;
+            if (Object.ReferenceEquals(other, null))
+            {
+                return false;
+            }
+            if (Object.ReferenceEquals(other, this))
+            {
+                return true;
+            }
+            return ID == pr.ID;
+        }
     }
 }
